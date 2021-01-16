@@ -1,18 +1,48 @@
 import json
 from enum import Enum
 import re
+import math
+import queue
+import copy
 
 
 class Plan():
     def __init__(self):
-        self.children = []
         self.id = 0
         # -1 means nothing
-        self.execute_time = -1
-        self.cost = -1
+        self._execute_time = None  # actual exectution time (ms)
+        self.cost = None          # estimate cost
+        self.actual_row = None     # actual rows
+        self.est_rows = None      # estimate rows
+        self.children = []      # children plans
 
     def encoding(self):
         raise NotImplementedError()
+
+    @property
+    def execute_time(self):
+        return self._execute_time
+
+    @execute_time.setter
+    def execute_time(self, value):
+        r""" Unit conversion (ms)
+        reference: tidb/util/execdetails/execdetails.go#FormatDuration
+        [s,ms,us,ns]
+        """
+        units = ['ns', 'µs', 'ms', 's']
+        unified_unit_index = 2  # ms
+
+        # match time string format: 22.22us
+        match_time = re.search(r'(\d+[\.]*\d+)(\w+)', value)
+        execution_time = float(match_time.group(1))
+        time_unit = match_time.group(2)
+        assert time_unit in units, f"time unit {time_unit} not existis"
+        time_unit_index = units.index(time_unit)
+
+        # unfied unit and rounded to two decimals
+        unfied_execute_time = execution_time * \
+            math.pow(10, (time_unit_index-unified_unit_index)*3)
+        self._execute_time = round(unfied_execute_time, 2)
 
 
 class JoinPlan(Plan):
@@ -27,7 +57,7 @@ class JoinPlan(Plan):
         raise NotImplementedError()
 
     def __str__(self):
-        return f"{self.join_type},{self.conditions},left:{self.left_node},right:{self.right_node}"
+        return f"{self.join_type},time:{self.execute_time},left:{self.left_node},right:{self.right_node}"
 
     def __repr__(self):
         return self.__str__()
@@ -42,7 +72,7 @@ class TableReader(Plan):
         raise NotImplementedError()
 
     def __str__(self):
-        return f"reader: {self.table},{self.conditions}"
+        return f"reader:{self.table},time:{self.execute_time}"
 
     def __repr__(self):
         return self.__str__()
@@ -66,7 +96,7 @@ class Condition():
 
 
 def extract_join_type(operator):
-    #operator.replace(' ', '')
+    # operator.replace(' ', '')
     index = operator.find(',')
     type_str = operator[:index]
     return type_str
@@ -107,22 +137,31 @@ def extract_selection_info(operator):
     return conditions
 
 
-def extract_table_reader(operator):
-    children = operator['children']
+def extract_table_reader(node):
+    childrens = node['children']
     table_reader = TableReader()
-    assert len(children) > 0
-    for child in children:
-        if 'Selection' in child['id']:
+    # childrens == 1?
+    assert len(childrens) > 0
+    q = queue.Queue()
+    q.put(node)
+    # bfs all child to find table and operatorInfo
+    while not q.empty():
+        cur_node = q.get()
+        if 'Selection' in cur_node['id']:
             # extract operator info
-            operator_info = child['operatorInfo']
+            operator_info = cur_node['operatorInfo']
             conditions = extract_selection_info(operator_info)
             table_reader.conditions = conditions
-        if 'Scan' in child['id']:
+        if 'Scan' in cur_node['id']:
             # extract which table to read
-            assert 'accessObject' in child
-            access_object = child['accessObject']
+            assert 'accessObject' in cur_node
+            access_object = cur_node['accessObject']
             table_name = access_object.split(':')[1]
             table_reader.table = table_name
+        if 'children' in cur_node and cur_node['children'] != None:
+            for item in cur_node['children']:
+                q.put(item)
+        table_reader.execute_time = node["AnalyzeInfo"]["time"]
     return table_reader
 
 
@@ -132,7 +171,7 @@ def extract_join_info(node):
         data node must be join type
     """
     operator_info = node['operatorInfo']
-    curren_node = None
+    analyze_info = node['AnalyzeInfo']
 
     if 'Join' in node['id']:
         # Join Node
@@ -143,6 +182,7 @@ def extract_join_info(node):
         childrens = node['children']
         current_node.left_node = extract_join_info(childrens[0])
         current_node.right_node = extract_join_info(childrens[1])
+        current_node.execute_time = analyze_info["time"]
     else:
         # Table Reader
         assert 'TableReader' in node['id']
@@ -170,14 +210,93 @@ def extract_join_tree(data_path):
     return current_node
 
 
+class State():
+    r""" An state corresponed to s_t of all trajectories,
+    includes `current_join_tree` and `not join tables`"""
+
+    def __init__(self, joined_tables, not_join_tables):
+        self.joined_tables = joined_tables
+        self.not_join_tables = not_join_tables
+
+    def __str__(self):
+        return f'joined_tables:{self.joined_tables},not_join_tables:{self.not_join_tables}'
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Action():
+    r""" An action inclues join_table (inner), and join_conditions """
+
+    def __init__(self, join_table, conditions):
+        self.join_table = join_table
+        self.conditions = conditions
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"action:{self.join_table}, conditions:{self.conditions}"
+
+
+class Observation():
+    r""" An observation at time T includes [state, action,reward]
+        action means which table be joined with join_tree at state
+        reward is the actual execution time
+    """
+
+    def __init__(self, state, action=None, reward=0):
+        self.state = state
+        self.action = action
+        self.reward = reward
+
+    def __str__(self):
+        return f'state:{self.state},action:{self.action},reawrd:{self.reward}'
+
+    def __repr__(self):
+        return self.__str__()
+
+
 def convert_tree_to_trajectory(node):
     r"""Convert an join tree to trajectory.
 
-    An trajectory includes[state,reward,next state]
+    An trajectory includes[state, reward, next state]
     state includes current `join tree` and `not join tables`
 
     Args:
-        node: the root of left deep join tree, 
+        node: the root of left deep join tree,
     """
-    # deep first search tree, and extract state and reward
+    # TODO support bushy tree
+    current_node = node
+    # Deep first search tree, and extract state and reward
+    # action at is None means terminal, so reawrd is zero
+    actions = []
+    rewards = []
+    # From end of the trajectory(st) to search(the root of the join tree)
+    while type(current_node) == JoinPlan:
+        action = Action(current_node.right_node, current_node.conditions)
+        actions.append(action)
+        rewards.append(current_node.execute_time)
+        current_node = current_node.left_node
+    else:
+        actions.append(current_node)
+        rewards.append(0)
+        # End of the search current_node is the first join table
+    assert type(current_node) == TableReader
+    assert len(rewards) == len(actions)
+    # First join table is current_node
+    # Reverse actions and rewards ordered by time
+    # remain_actions = list(reversed(actions))
+    # remain_rewards = list(reversed(rewards))
+    actions.reverse()
+    rewards.reverse()
+    actions_length = len(actions)
+    # Iterate actions and foramt trajectories
     trajectories = []
+    for i in range(1, actions_length):
+        state = State(actions[:i], actions[i:])
+        trajectories.append(
+            Observation(state, actions[i], rewards[i]))
+    # Construct trajectories
+
+    return trajectories
