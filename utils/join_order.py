@@ -4,19 +4,22 @@ import re
 import math
 import queue
 import copy
+import numpy as np
 
 
 class Plan():
+    r""" Abstract class for logical plan and physical plan """
+
     def __init__(self):
         self.id = 0
         # -1 means nothing
         self._execute_time = None  # actual exectution time (ms)
         self.cost = None          # estimate cost
-        self.actual_row = None     # actual rows
+        self.actual_row = None    # actual rows
         self.est_rows = None      # estimate rows
-        self.children = []      # children plans
+        self.children = []        # children plans
 
-    def encoding(self):
+    def encode(self):
         raise NotImplementedError()
 
     @property
@@ -53,8 +56,35 @@ class JoinPlan(Plan):
         self.left_node = None
         self.right_node = None
 
+    def get_features(self):
+        return np.array([1, 2, 3, 4])
+
     def encode(self):
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        return self.preorder_encode()
+
+    def preorder_encode(self):
+        r""" TreeCNN need preorder encoding """
+        preorder = []
+
+        def recurse(x, idx):
+            preorder.append(x.get_features())
+            tree_cnn_indexes = []
+            # leaf node
+            if type(x) == TableReader:
+                return [[idx, 0, 0]]
+            left_tree_cnn_indexes = recurse(x.left_node, idx+1)
+            left_tree_count = len(preorder)
+            right_tree_cnn_indexes = recurse(x.right_node, left_tree_count+1)
+            tree_cnn_indexes = [[
+                idx, left_tree_cnn_indexes[0][0], right_tree_cnn_indexes[0][0]]]
+            tree_cnn_indexes.extend(left_tree_cnn_indexes)
+            tree_cnn_indexes.extend(right_tree_cnn_indexes)
+            return tree_cnn_indexes
+
+        tree_cnn_indexes = recurse(self, 1)
+        preorder = [[0, 0, 0, 0]]+preorder
+        return np.array(preorder).transpose(0, 1), np.array(tree_cnn_indexes).flatten().reshape(-1, 1)
 
     def __str__(self):
         return f"{self.join_type},time:{self.execute_time},left:{self.left_node},right:{self.right_node}"
@@ -68,8 +98,11 @@ class TableReader(Plan):
         self.table = table
         self.conditions = conditions
 
+    def get_features(self):
+        return np.array([1, 1, 1, 1])
+
     def encode(self):
-        raise NotImplementedError()
+        return self.get_features()
 
     def __str__(self):
         return f"reader:{self.table},time:{self.execute_time}"
@@ -98,7 +131,7 @@ class Condition():
 def extract_join_type(operator):
     # operator.replace(' ', '')
     index = operator.find(',')
-    type_str = operator[:index]
+    type_str = operator[: index]
     return type_str
 
 
@@ -168,7 +201,8 @@ def extract_table_reader(node):
 def extract_join_info(node):
     r"""
         Recursive extract join tree from the root node data
-        data node must be join type
+        data node must be join type.
+        ref: https://docs.pingcap.com/tidb/dev/explain-overview
     """
     operator_info = node['operatorInfo']
     analyze_info = node['AnalyzeInfo']
@@ -185,7 +219,7 @@ def extract_join_info(node):
         current_node.execute_time = analyze_info["time"]
     else:
         # Table Reader
-        assert 'TableReader' in node['id']
+        # assert 'TableReader' in node['id']
         # extract selection if need
         current_node = extract_table_reader(node)
     return current_node
@@ -286,8 +320,6 @@ def convert_tree_to_trajectory(node):
     assert len(rewards) == len(actions)
     # First join table is current_node
     # Reverse actions and rewards ordered by time
-    # remain_actions = list(reversed(actions))
-    # remain_rewards = list(reversed(rewards))
     actions.reverse()
     rewards.reverse()
     actions_length = len(actions)
