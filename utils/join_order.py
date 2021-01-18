@@ -84,7 +84,7 @@ class JoinPlan(Plan):
 
         tree_cnn_indexes = recurse(self, 1)
         preorder = [[0, 0, 0, 0]]+preorder
-        return np.array(preorder).transpose(0, 1), np.array(tree_cnn_indexes).flatten().reshape(-1, 1)
+        return np.array(preorder).transpose(1, 0), np.array(tree_cnn_indexes).flatten().reshape(-1, 1)
 
     def __str__(self):
         return f"{self.join_type},time:{self.execute_time},left:{self.left_node},right:{self.right_node}"
@@ -248,15 +248,17 @@ class State():
     r""" An state corresponed to s_t of all trajectories,
     includes `current_join_tree` and `not join tables`"""
 
-    def __init__(self, joined_tables, not_join_tables):
+    def __init__(self, joined_tables, join_tree, not_join_tables):
         self.joined_tables = joined_tables
         self.not_join_tables = not_join_tables
+        self.join_tree = join_tree
+        self.is_done = len(not_join_tables) == 0
 
     def __str__(self):
-        return f'joined_tables:{self.joined_tables},not_join_tables:{self.not_join_tables}'
+        return f'joined_tables:{self.joined_tables},join_tree:{self.join_tree}not_join_tables:{self.not_join_tables}'
 
-    def __repr__(self):
-        return self.__str__()
+    def encode(self):
+        return self.join_tree.encode()
 
 
 class Action():
@@ -266,11 +268,11 @@ class Action():
         self.join_table = join_table
         self.conditions = conditions
 
-    def __repr__(self):
-        return self.__str__()
-
     def __str__(self):
-        return f"action:{self.join_table}, conditions:{self.conditions}"
+        return f"action:{self.join_table}"
+
+    def encode(self):
+        return self.join_table.encode()
 
 
 class Observation():
@@ -304,31 +306,43 @@ def convert_tree_to_trajectory(node):
     current_node = node
     # Deep first search tree, and extract state and reward
     # action at is None means terminal, so reawrd is zero
-    actions = []
-    rewards = []
+    join_trees = [current_node]  # final state
+    join_order_reverse = []
+
+    rewards = [0]
     # From end of the trajectory(st) to search(the root of the join tree)
     while type(current_node) == JoinPlan:
         action = Action(current_node.right_node, current_node.conditions)
-        actions.append(action)
+        join_order_reverse.append(action)
+        join_trees.append(current_node)
         rewards.append(current_node.execute_time)
         current_node = current_node.left_node
     else:
-        actions.append(current_node)
-        rewards.append(0)
+        join_order_reverse.append(
+            Action(current_node, current_node.conditions))
+        join_trees.append(current_node)
         # End of the search current_node is the first join table
     assert type(current_node) == TableReader
-    assert len(rewards) == len(actions)
+    assert len(rewards) == len(join_order_reverse)
+    assert len(join_trees) == len(join_order_reverse)+1
     # First join table is current_node
     # Reverse actions and rewards ordered by time
-    actions.reverse()
+    join_order_reverse.reverse()
     rewards.reverse()
-    actions_length = len(actions)
+    join_trees.reverse()
+    actions_length = len(join_order_reverse)
     # Iterate actions and foramt trajectories
     trajectories = []
+    print(join_order_reverse)
+    print(rewards)
     for i in range(1, actions_length):
-        state = State(actions[:i], actions[i:])
+        state = State(join_order_reverse[:i],
+                      join_trees[i-1], join_order_reverse[i:])
         trajectories.append(
-            Observation(state, actions[i], rewards[i]))
+            Observation(state, join_order_reverse[i], rewards[i-1]))
+    else:
+        state = State(join_order_reverse, join_trees[-1], [])
+        trajectories.append(Observation(state, None, 0))
     # Construct trajectories
-
+    print([t.state.is_done for t in trajectories])
     return trajectories

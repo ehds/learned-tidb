@@ -36,4 +36,4 @@ def test_convert_tree_to_trajectory():
     tree = join_order.extract_join_tree('data/test.json')
     trajectories = join_order.convert_tree_to_trajectory(tree)
     assert type(trajectories) == list
-    assert len(trajectories) == 1
+    assert len(trajectories) == 2
