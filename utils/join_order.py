@@ -36,7 +36,7 @@ class Plan():
         unified_unit_index = 2  # ms
 
         # match time string format: 22.22us
-        match_time = re.search(r'(\d+[\.]*\d+)(\w+)', value)
+        match_time = re.search(r'(\d*[\.]*\d*)(\w+)', value)
         execution_time = float(match_time.group(1))
         time_unit = match_time.group(2)
         assert time_unit in units, f"time unit {time_unit} not existis"
@@ -194,7 +194,8 @@ def extract_table_reader(node):
         if 'children' in cur_node and cur_node['children'] != None:
             for item in cur_node['children']:
                 q.put(item)
-        table_reader.execute_time = node["AnalyzeInfo"]["time"]
+
+        table_reader.execute_time = node["AnalyzeInfo"]["time"] if "time" in node["AnalyzeInfo"] else "0s"
     return table_reader
 
 
@@ -227,7 +228,7 @@ def extract_join_info(node):
 
 def extract_join_tree(data_path):
     data = None
-    with open(data_path, 'r') as f:
+    with open(data_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     # iterate data find the root join node
     current_node = data

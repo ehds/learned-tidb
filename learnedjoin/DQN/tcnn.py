@@ -197,7 +197,7 @@ class BinaryTreeConv(nn.Module):
 
         # add a zero vector back on
         zero_vec = torch.zeros(
-            (trees.shape[0], self.__out_channels), requires_grad=False).unsqueeze(2)
+            (trees.shape[0], self.__out_channels), requires_grad=False).unsqueeze(2).to(trees.device)
         results = torch.cat((zero_vec, results), dim=2)
         return (results, orig_idxes)
 

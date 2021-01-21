@@ -20,8 +20,6 @@ class MLPQFunction(nn.Module):
         self.q = mlp([obs_dim+act_dim]+list(hidden_sizes)+[1], activation)
 
     def forward(self, obs, act):
-        print("obs", obs)
-        print("act", act)
         input = torch.cat((obs, act), dim=-1)
         output = self.q(input)
         return output
@@ -78,13 +76,14 @@ class StateTreeEncoder(nn.Module):
 
 class JoinOrderDQN(object):
     def __init__(self, buffer_size, batch_size, obs_dim, act_dim):
-        self.replay_buffer = ReplayBuffer(buffer_size, batch_size, "cpu")
-        self.q_net = MLPQFunction(obs_dim, act_dim, [32])
-        self.train_steps = 5
+        self.replay_buffer = ReplayBuffer(buffer_size, batch_size)
+        # self.q_net = MLPQFunction(obs_dim, act_dim, [32])
+        self.q_net = TreeCNNQFunction(obs_dim, 32, act_dim)
+        self.train_steps = 50
         self.batch_size = batch_size
         self.gamma = 0.99
         self.clippng_norm = 10
-        self.device = "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def train(self):
         # TODO off-line to on-line
@@ -98,18 +97,18 @@ class JoinOrderDQN(object):
             # get batch data
             batch = self.replay_buffer.sample(self.batch_size)
             states, actions, rewards, next_states, dones = batch
-            Q = self.q_net(actions, actions)
+            Q = self.q_net(states, actions)
             # compute expeacted Q(s_i+1,pi(a))
             # TODO search a
             Q_next = 0
             with torch.no_grad():
-                Q_next = self.q_net(actions, actions)
-            print(Q_next)
+                Q_next = self.q_net(next_states, actions)
             Q_expected = rewards+self.gamma*Q_next*(1-dones)
 
             loss = F.mse_loss(Q_expected, Q)
             # update network
             loss.backward()
-            # nn.utils.clip_grad_norm_(
-            #     self.q_net.parameters(), self.clippng_norm)
+            nn.utils.clip_grad_norm_(
+                self.q_net.parameters(), self.clippng_norm)
+            print(loss.item())
             q_optimizer.step()
