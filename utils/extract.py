@@ -15,14 +15,12 @@ def extract_object_from_str(data):
     def erase_unused_common(data):
         data = data.group(0)
         return '}'
-    print("before:", data)
     data = re.sub(r',(.*?):', tostr, data)
     data = re.sub(r':([^\{]*?)[^\}],', tostr, data)
     data = re.sub(r'{(.*?):', tostr, data)
     data = re.sub(r':([^\"]*?)}', tostr, data)
     data = re.sub(r'(,})', erase_unused_common, data)
 
-    print("after:", data)
     return json.loads(data)
 
 

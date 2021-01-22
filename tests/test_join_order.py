@@ -8,6 +8,11 @@ def test_extract_join_conditions():
     assert type(info) == list
     assert len(info) == 1
 
+    data = "inner join, inner:TableReader_131, outer key:imdb.movie_info.info_type_id, inner key:imdb.info_type.id, equal cond:eq(imdb.movie_info.info_type_id, imdb.info_type.id)"
+    info = join_order.extract_join_conditions(data)
+    assert type(info) == list
+    assert len(info) == 1
+
 
 def test_extract_join_type():
     data = "inner join, equal:[eq(test.b.id, test.a.id)]"

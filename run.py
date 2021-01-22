@@ -1,5 +1,5 @@
 from learnedjoin.DQN.dqn import JoinOrderDQN
-from connect.connect import DBConnect
+from connect.connect import DB
 from utils.file_helper import write_json
 from utils.join_order import extract_join_tree, convert_tree_to_trajectory
 import numpy as np

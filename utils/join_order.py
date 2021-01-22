@@ -5,6 +5,7 @@ import math
 import queue
 import copy
 import numpy as np
+from utils.file_helper import get_db_info
 
 
 class Plan():
@@ -49,6 +50,10 @@ class Plan():
 
 
 class JoinPlan(Plan):
+    # ref: github.com/pingcap/tidb/planner/core/logical_plans.go
+    _join_type_ = ["inner join", "left outer join", "right outer join",
+                   "semi join", "anti semi join", "left outer semi join", "anti left outer semi join"]
+
     def __init__(self, join_type, conditions):
         super(JoinPlan, self).__init__()
         self.join_type = join_type
@@ -57,14 +62,33 @@ class JoinPlan(Plan):
         self.right_node = None
 
     def get_features(self):
-        return np.array([1, 2, 3, 4])
+        # TODO encode conditions
+        all_table = get_db_info('imdb')["tables"]
+        features = one_hot(self.join_type, JoinPlan._join_type_)
+        # make the join_type features size equal to table features
+        if len(JoinPlan._join_type_) < len(all_table):
+            # padding to tail
+            padding_size = len(all_table) - len(JoinPlan._join_type_)
+            features = np.pad(features, (0, padding_size),
+                              'constant', constant_values=(0, 0))
+        else:
+            # force cuting features
+            cut_size = len(all_table)
+            features = features[:len(all_table)]
+        print("join", features.size)
+        return features
 
     def encode(self):
         # raise NotImplementedError()
         return self.preorder_encode()
 
     def preorder_encode(self):
-        r""" TreeCNN need preorder encoding """
+        r""" TreeCNN need preorder encoding 
+
+        Return:
+            features: [in_channel * nodes]
+            tree_indexes: [nodes * 3 * 1]
+        """
         preorder = []
 
         def recurse(x, idx):
@@ -83,8 +107,9 @@ class JoinPlan(Plan):
             return tree_cnn_indexes
 
         tree_cnn_indexes = recurse(self, 1)
-        preorder = [[0, 0, 0, 0]]+preorder
-        return np.array(preorder).transpose(1, 0), np.array(tree_cnn_indexes).flatten().reshape(-1, 1)
+        # padding zero features on the first dimession
+        preorder = np.pad(preorder, (1, 0), 'constant', constant_values=(0, 0))
+        return np.array(preorder).transpose(1, 0), np.array(tree_cnn_indexes, dtype=np.int).flatten().reshape(-1, 1)
 
     def __str__(self):
         return f"{self.join_type},time:{self.execute_time},left:{self.left_node},right:{self.right_node}"
@@ -98,8 +123,14 @@ class TableReader(Plan):
         self.table = table
         self.conditions = conditions
 
-    def get_features(self):
-        return np.array([1, 1, 1, 1])
+    def get_features(self, encoding='one-hot'):
+        # TODO imdb should be set
+
+        db_info = get_db_info('imdb')
+        tables = db_info['tables']
+        features = one_hot(self.table, tables)
+        print("table", features.shape)
+        return features
 
     def encode(self):
         return self.get_features()
@@ -112,12 +143,15 @@ class TableReader(Plan):
 
 
 class Condition():
+    _encoding_operator_ = ["lt", "gt", "le", "ge", "eq", "ne"]
+    # _encoding_size_ = 10
+
     def __init__(self, function, args):
         self.function = function
         self.args = args
 
     def encode(self):
-        pass
+        raise NotImplementedError()
 
     def __str__(self):
         return f"{self.function}:{self.args}"
@@ -128,22 +162,95 @@ class Condition():
         #                 'SemiJoin', 'AntiSemiJoin', 'LeftOuterSemiJoin', 'AntiLeftOuterSemiJoin')
 
 
+class TableCondition(Condition):
+    r""" TableCondition represents the table selection filter
+    """
+
+    def __init__(self, function, args):
+        super(TableCondition, self).__init__(function, args)
+
+    def encode(self):
+        r""" encoding format:
+            [0  1  0.. 1 1 0.. 1 0 1]
+            |- - - -|- - - -|- - - -|
+               op     arg1    arg2
+
+        we just encoding binary function,
+        normaly arg1 is column and arg2 is specific value
+        """
+        db_info = get_db_info('imdb')
+        columns = len(db_info['flatten_columns'])
+        operators = Condition._encoding_operator_
+        if self.function not in operators:
+            return np.zeros(len(operators)+2*len(columns))
+        assert self.args == 2 and self.args[0] in columns
+        op = one_hot(self.function, operators)
+        arg1 = one_hot(self.args[0], columns)
+        arg2_value = eval(self.args[1])
+        if type(arg2_value) == int or type(arg2_value) == float:
+            arg2 = np.array([float(arg2_value)], dtype=np.float)
+        else:
+            arg2 = embading_word(arg2_value)
+        return np.concatenate([op, arg1, arg2])
+
+
+class JoinCondition(Condition):
+    r""" JoinCondition represents the join condition, func(arg1,arg2)
+    """
+
+    def __init__(self, function, args):
+        super(JoinCondition, self).__init__(function, args)
+
+    def encode(self):
+        r""" encoding format:
+
+            [0  1  0.. 1 1 0.. 1 0 1]
+            |- - - -|- - - -|- - - -|
+               op     arg1    arg2
+        we just encoding binary function: function(arg1,arg2)
+        and arg is table column
+        """
+        db_info = get_db_info('imdb')
+        columns = db_info['flatten_columns']
+        operators = Condition._encoding_operator_
+
+        if self.function not in operators:
+            return np.zeros(len(operators)+2*len(columns))
+        operator = one_hot(self.function, operators)
+        assert(len(self.args)) == 2
+        args1 = one_hot(self.args[0], columns)
+        args2 = one_hot(self.args[1], columns)
+        return np.concatenate([operator, args1, args2])
+
+
+def one_hot(value, data):
+    one_hot = np.zeros(len(data))
+    if value in data:
+        one_hot[data.index(value)] = 1
+    return one_hot
+
+
+def embading_word(word):
+    # TODO embading world
+    return np.array([1])
+
+
 def extract_join_type(operator):
-    # operator.replace(' ', '')
+    # operator = operator.replace(' ', '')
     index = operator.find(',')
     type_str = operator[: index]
     return type_str
 
 
 def extract_join_conditions(operator):
-    operator.replace(' ', '')
+    operator = operator.replace(' ', '')
     conditions = []
     # find all conditions
     conditions_str = re.findall(r'(\w+\(.*?\))', operator)
     for condition in conditions_str:
         function = re.search(r'(\w+)\(', condition).group(1)
         args = re.search(r'\((.*?)\)', condition).group(1).split(',')
-        conditions.append(Condition(function, args))
+        conditions.append(JoinCondition(function, args))
     return conditions
 
 
@@ -166,7 +273,7 @@ def extract_selection_info(operator):
         function, args = condition_match.group(
             1), condition_match.group(2)
         args = args.replace(' ', '').split(',')
-        conditions.append(Condition(function, args))
+        conditions.append(TableCondition(function, args))
     return conditions
 
 
@@ -189,7 +296,7 @@ def extract_table_reader(node):
             # extract which table to read
             assert 'accessObject' in cur_node
             access_object = cur_node['accessObject']
-            table_name = access_object.split(':')[1]
+            table_name = access_object.split(',')[0].split(':')[1]
             table_reader.table = table_name
         if 'children' in cur_node and cur_node['children'] != None:
             for item in cur_node['children']:
@@ -203,7 +310,7 @@ def extract_join_info(node):
     r"""
         Recursive extract join tree from the root node data
         data node must be join type.
-        ref: https://docs.pingcap.com/tidb/dev/explain-overview
+        ref: https: // docs.pingcap.com/tidb/dev/explain-overview
     """
     operator_info = node['operatorInfo']
     analyze_info = node['AnalyzeInfo']
@@ -263,7 +370,7 @@ class State():
 
 
 class Action():
-    r""" An action inclues join_table (inner), and join_conditions """
+    r""" An action inclues join_table(inner), and join_conditions """
 
     def __init__(self, join_table, conditions):
         self.join_table = join_table
@@ -277,7 +384,7 @@ class Action():
 
 
 class Observation():
-    r""" An observation at time T includes [state, action,reward]
+    r""" An observation at time T includes[state, action, reward]
         action means which table be joined with join_tree at state
         reward is the actual execution time
     """
@@ -301,7 +408,9 @@ def convert_tree_to_trajectory(node):
     state includes current `join tree` and `not join tables`
 
     Args:
-        node: the root of left deep join tree,
+        node: the root of left deep join tree
+    Return:
+        List of Observations
     """
     # TODO support bushy tree
     current_node = node
