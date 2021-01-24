@@ -32,13 +32,14 @@ def test_extract_selection_info():
     assert info[3].function == 'not'
 
 
-def test_extract_join_tree():
-    tree = join_order.extract_join_tree('data/test.json')
+def test_extract_join_tree_from_path():
+    tree = join_order.extract_join_tree_from_path(
+        'data/test.json')
     assert type(tree) == join_order.JoinPlan
 
 
 def test_convert_tree_to_trajectory():
-    tree = join_order.extract_join_tree('data/test.json')
+    tree = join_order.extract_join_tree_from_path('data/test.json')
     trajectories = join_order.convert_tree_to_trajectory(tree)
     assert type(trajectories) == list
     assert len(trajectories) == 2

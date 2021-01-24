@@ -42,19 +42,35 @@ message HelloReply {
   string message = 1;
 }
 
-message LogicalJoinNode{
-  string tp = 1;
-  repeated LogicalJoinNode childrens=2;
-  message Condition{
+message Condition{
     string funcname = 1;
     repeated string args = 2;
+}
+
+message LogicalNode{
+  oneof node{
+    LogicalJoinNode join_node = 1;
+    LogicalTableNode table_node = 2;
   }
+  repeated LogicalNode childrens = 3;
+}
+message LogicalJoinNode{
+  string tp = 1;
+  string join_type = 2;
+  repeated LogicalJoinNode join_childrens = 3;
+  repeated LogicalTableNode table_childrens = 4;
+  repeated Condition conditions = 5;
+}
+
+message LogicalTableNode{
+  string tp = 1;
+  string table_name = 2;
   repeated Condition conditions = 3;
 }
 
 message State{
-  LogicalJoinNode current_join_tree = 1;
-  repeated LogicalJoinNode actions = 2;
+  LogicalNode current_join_tree = 1;
+  repeated LogicalNode actions = 2;
 }
 
 

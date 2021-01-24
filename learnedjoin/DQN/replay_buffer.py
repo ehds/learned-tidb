@@ -45,8 +45,10 @@ class ReplayBuffer(object):
             [e.state[0] for e in experiences if e is not None], axis=0)).float().to(self.device)
         tree_conv = torch.from_numpy(np.stack(
             [e.state[1] for e in experiences if e is not None], axis=0)).long().to(self.device)
-        actions = torch.from_numpy(np.vstack(
-            [e.action for e in experiences if e is not None])).float().to(self.device)
+        actions = torch.from_numpy(np.stack(
+            [e.action[0] for e in experiences if e is not None], axis=0)).float().to(self.device)
+        tree_action = torch.from_numpy(np.stack(
+            [e.action[1] for e in experiences if e is not None], axis=0)).long().to(self.device)
         rewards = torch.from_numpy(np.vstack(
             [e.reward for e in experiences if e is not None])).float().to(self.device)
         next_states = torch.from_numpy(np.stack(
@@ -55,7 +57,7 @@ class ReplayBuffer(object):
             [e.state[1] for e in experiences if e is not None], axis=0)).long().to(self.device)
         dones = torch.from_numpy(np.vstack(
             [int(e.done) for e in experiences if e is not None])).float().to(self.device)
-        return (states, tree_conv), actions, rewards, (next_states, next_tree_conv), dones
+        return (states, tree_conv), (actions, tree_action), rewards, (next_states, next_tree_conv), dones
 
     def __len__(self):
         return len(self.memory)

@@ -1,4 +1,4 @@
-from utils.join_order import extract_join_tree
+from utils.join_order import extract_join_tree_from_path
 import learnedjoin.DQN.tcnn as tcnn
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ import os
 def test_test_tree_cnn():
     if not os.path.exists('data/33c.json'):
         return
-    a = extract_join_tree('data/33c.json')
+    a = extract_join_tree_from_path('data/33c.json')
     # a.encode()[0]  in_channels_ * nodes
     obs_dim = a.encode()[0].shape[-2]
     output_dim = 4

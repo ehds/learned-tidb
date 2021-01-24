@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'\n\033io.grpc.examples.helloworldB\017HelloWorldProtoP\001Z$github.com/pingcap/tidb/planner/core',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"\xb5\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12.\n\tchildrens\x18\x02 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x39\n\nconditions\x18\x03 \x03(\x0b\x32%.join_order.LogicalJoinNode.Condition\x1a+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"m\n\x05State\x12\x36\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNode\x12,\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode2\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\x8c\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
+  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"\xa7\x01\n\x0bLogicalNode\x12\x30\n\tjoin_node\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNodeH\x00\x12\x32\n\ntable_node\x18\x02 \x01(\x0b\x32\x1c.join_order.LogicalTableNodeH\x00\x12*\n\tchildrens\x18\x03 \x03(\x0b\x32\x17.join_order.LogicalNodeB\x06\n\x04node\"\xc7\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x11\n\tjoin_type\x18\x02 \x01(\t\x12\x33\n\x0ejoin_childrens\x18\x03 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x35\n\x0ftable_childrens\x18\x04 \x03(\x0b\x32\x1c.join_order.LogicalTableNode\x12)\n\nconditions\x18\x05 \x03(\x0b\x32\x15.join_order.Condition\"]\n\x10LogicalTableNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x12\n\ntable_name\x18\x02 \x01(\t\x12)\n\nconditions\x18\x03 \x03(\x0b\x32\x15.join_order.Condition\"e\n\x05State\x12\x32\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x17.join_order.LogicalNode\x12(\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x17.join_order.LogicalNode2\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\x8c\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
 )
 
 
@@ -89,23 +89,23 @@ _HELLOREPLY = _descriptor.Descriptor(
 )
 
 
-_LOGICALJOINNODE_CONDITION = _descriptor.Descriptor(
+_CONDITION = _descriptor.Descriptor(
   name='Condition',
-  full_name='join_order.LogicalJoinNode.Condition',
+  full_name='join_order.Condition',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='funcname', full_name='join_order.LogicalJoinNode.Condition.funcname', index=0,
+      name='funcname', full_name='join_order.Condition.funcname', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='args', full_name='join_order.LogicalJoinNode.Condition.args', index=1,
+      name='args', full_name='join_order.Condition.args', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -123,9 +123,61 @@ _LOGICALJOINNODE_CONDITION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=232,
-  serialized_end=275,
+  serialized_start=93,
+  serialized_end=136,
 )
+
+
+_LOGICALNODE = _descriptor.Descriptor(
+  name='LogicalNode',
+  full_name='join_order.LogicalNode',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='join_node', full_name='join_order.LogicalNode.join_node', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='table_node', full_name='join_order.LogicalNode.table_node', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='childrens', full_name='join_order.LogicalNode.childrens', index=2,
+      number=3, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='node', full_name='join_order.LogicalNode.node',
+      index=0, containing_type=None,
+      create_key=_descriptor._internal_create_key,
+    fields=[]),
+  ],
+  serialized_start=139,
+  serialized_end=306,
+)
+
 
 _LOGICALJOINNODE = _descriptor.Descriptor(
   name='LogicalJoinNode',
@@ -143,15 +195,29 @@ _LOGICALJOINNODE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='childrens', full_name='join_order.LogicalJoinNode.childrens', index=1,
-      number=2, type=11, cpp_type=10, label=3,
+      name='join_type', full_name='join_order.LogicalJoinNode.join_type', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='join_childrens', full_name='join_order.LogicalJoinNode.join_childrens', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='conditions', full_name='join_order.LogicalJoinNode.conditions', index=2,
-      number=3, type=11, cpp_type=10, label=3,
+      name='table_childrens', full_name='join_order.LogicalJoinNode.table_childrens', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='conditions', full_name='join_order.LogicalJoinNode.conditions', index=4,
+      number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -159,7 +225,7 @@ _LOGICALJOINNODE = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_LOGICALJOINNODE_CONDITION, ],
+  nested_types=[],
   enum_types=[
   ],
   serialized_options=None,
@@ -168,8 +234,54 @@ _LOGICALJOINNODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=94,
-  serialized_end=275,
+  serialized_start=309,
+  serialized_end=508,
+)
+
+
+_LOGICALTABLENODE = _descriptor.Descriptor(
+  name='LogicalTableNode',
+  full_name='join_order.LogicalTableNode',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='tp', full_name='join_order.LogicalTableNode.tp', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='table_name', full_name='join_order.LogicalTableNode.table_name', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='conditions', full_name='join_order.LogicalTableNode.conditions', index=2,
+      number=3, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=510,
+  serialized_end=603,
 )
 
 
@@ -207,18 +319,31 @@ _STATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=277,
-  serialized_end=386,
+  serialized_start=605,
+  serialized_end=706,
 )
 
-_LOGICALJOINNODE_CONDITION.containing_type = _LOGICALJOINNODE
-_LOGICALJOINNODE.fields_by_name['childrens'].message_type = _LOGICALJOINNODE
-_LOGICALJOINNODE.fields_by_name['conditions'].message_type = _LOGICALJOINNODE_CONDITION
-_STATE.fields_by_name['current_join_tree'].message_type = _LOGICALJOINNODE
-_STATE.fields_by_name['actions'].message_type = _LOGICALJOINNODE
+_LOGICALNODE.fields_by_name['join_node'].message_type = _LOGICALJOINNODE
+_LOGICALNODE.fields_by_name['table_node'].message_type = _LOGICALTABLENODE
+_LOGICALNODE.fields_by_name['childrens'].message_type = _LOGICALNODE
+_LOGICALNODE.oneofs_by_name['node'].fields.append(
+  _LOGICALNODE.fields_by_name['join_node'])
+_LOGICALNODE.fields_by_name['join_node'].containing_oneof = _LOGICALNODE.oneofs_by_name['node']
+_LOGICALNODE.oneofs_by_name['node'].fields.append(
+  _LOGICALNODE.fields_by_name['table_node'])
+_LOGICALNODE.fields_by_name['table_node'].containing_oneof = _LOGICALNODE.oneofs_by_name['node']
+_LOGICALJOINNODE.fields_by_name['join_childrens'].message_type = _LOGICALJOINNODE
+_LOGICALJOINNODE.fields_by_name['table_childrens'].message_type = _LOGICALTABLENODE
+_LOGICALJOINNODE.fields_by_name['conditions'].message_type = _CONDITION
+_LOGICALTABLENODE.fields_by_name['conditions'].message_type = _CONDITION
+_STATE.fields_by_name['current_join_tree'].message_type = _LOGICALNODE
+_STATE.fields_by_name['actions'].message_type = _LOGICALNODE
 DESCRIPTOR.message_types_by_name['HelloRequest'] = _HELLOREQUEST
 DESCRIPTOR.message_types_by_name['HelloReply'] = _HELLOREPLY
+DESCRIPTOR.message_types_by_name['Condition'] = _CONDITION
+DESCRIPTOR.message_types_by_name['LogicalNode'] = _LOGICALNODE
 DESCRIPTOR.message_types_by_name['LogicalJoinNode'] = _LOGICALJOINNODE
+DESCRIPTOR.message_types_by_name['LogicalTableNode'] = _LOGICALTABLENODE
 DESCRIPTOR.message_types_by_name['State'] = _STATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -236,20 +361,33 @@ HelloReply = _reflection.GeneratedProtocolMessageType('HelloReply', (_message.Me
   })
 _sym_db.RegisterMessage(HelloReply)
 
-LogicalJoinNode = _reflection.GeneratedProtocolMessageType('LogicalJoinNode', (_message.Message,), {
+Condition = _reflection.GeneratedProtocolMessageType('Condition', (_message.Message,), {
+  'DESCRIPTOR' : _CONDITION,
+  '__module__' : 'join_order_pb2'
+  # @@protoc_insertion_point(class_scope:join_order.Condition)
+  })
+_sym_db.RegisterMessage(Condition)
 
-  'Condition' : _reflection.GeneratedProtocolMessageType('Condition', (_message.Message,), {
-    'DESCRIPTOR' : _LOGICALJOINNODE_CONDITION,
-    '__module__' : 'join_order_pb2'
-    # @@protoc_insertion_point(class_scope:join_order.LogicalJoinNode.Condition)
-    })
-  ,
+LogicalNode = _reflection.GeneratedProtocolMessageType('LogicalNode', (_message.Message,), {
+  'DESCRIPTOR' : _LOGICALNODE,
+  '__module__' : 'join_order_pb2'
+  # @@protoc_insertion_point(class_scope:join_order.LogicalNode)
+  })
+_sym_db.RegisterMessage(LogicalNode)
+
+LogicalJoinNode = _reflection.GeneratedProtocolMessageType('LogicalJoinNode', (_message.Message,), {
   'DESCRIPTOR' : _LOGICALJOINNODE,
   '__module__' : 'join_order_pb2'
   # @@protoc_insertion_point(class_scope:join_order.LogicalJoinNode)
   })
 _sym_db.RegisterMessage(LogicalJoinNode)
-_sym_db.RegisterMessage(LogicalJoinNode.Condition)
+
+LogicalTableNode = _reflection.GeneratedProtocolMessageType('LogicalTableNode', (_message.Message,), {
+  'DESCRIPTOR' : _LOGICALTABLENODE,
+  '__module__' : 'join_order_pb2'
+  # @@protoc_insertion_point(class_scope:join_order.LogicalTableNode)
+  })
+_sym_db.RegisterMessage(LogicalTableNode)
 
 State = _reflection.GeneratedProtocolMessageType('State', (_message.Message,), {
   'DESCRIPTOR' : _STATE,
@@ -268,8 +406,8 @@ _GREETER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=389,
-  serialized_end=531,
+  serialized_start=709,
+  serialized_end=851,
   methods=[
   _descriptor.MethodDescriptor(
     name='SayHello',
@@ -304,8 +442,8 @@ _JOINORDER = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=534,
-  serialized_end=674,
+  serialized_start=854,
+  serialized_end=994,
   methods=[
   _descriptor.MethodDescriptor(
     name='TestJoinNode',

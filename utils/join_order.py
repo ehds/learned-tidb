@@ -14,10 +14,10 @@ class Plan():
     def __init__(self):
         self.id = 0
         # -1 means nothing
-        self._execute_time = None  # actual exectution time (ms)
-        self.cost = None          # estimate cost
-        self.actual_row = None    # actual rows
-        self.est_rows = None      # estimate rows
+        self._execute_time = 0  # actual exectution time (ms)
+        self.cost = 0          # estimate cost
+        self.actual_row = 0    # actual rows
+        self.est_rows = 0      # estimate rows
         self.children = []        # children plans
 
     def encode(self):
@@ -54,14 +54,14 @@ class JoinPlan(Plan):
     _join_type_ = ["inner join", "left outer join", "right outer join",
                    "semi join", "anti semi join", "left outer semi join", "anti left outer semi join"]
 
-    def __init__(self, join_type, conditions):
+    def __init__(self, join_type, conditions=[]):
         super(JoinPlan, self).__init__()
         self.join_type = join_type
         self.conditions = conditions
         self.left_node = None
         self.right_node = None
 
-    def get_features(self):
+    def get_features(self, encoding='one-hot'):
         # TODO encode conditions
         all_table = get_db_info('imdb')["tables"]
         features = one_hot(self.join_type, JoinPlan._join_type_)
@@ -75,7 +75,6 @@ class JoinPlan(Plan):
             # force cuting features
             cut_size = len(all_table)
             features = features[:len(all_table)]
-        print("join", features.size)
         return features
 
     def encode(self):
@@ -120,6 +119,7 @@ class JoinPlan(Plan):
 
 class TableReader(Plan):
     def __init__(self, table='', conditions=[]):
+        super(TableReader, self).__init__()
         self.table = table
         self.conditions = conditions
 
@@ -129,11 +129,18 @@ class TableReader(Plan):
         db_info = get_db_info('imdb')
         tables = db_info['tables']
         features = one_hot(self.table, tables)
-        print("table", features.shape)
         return features
 
     def encode(self):
-        return self.get_features()
+        return self._preorder_encode()
+
+    def _preorder_encode(self):
+        r""" return preorder node features [features,node_size]"""
+        features = np.expand_dims(self.get_features(), axis=0)
+
+        features = np.pad(features, (1, 0),
+                          'constant', constant_values=(0, 0))
+        return features.transpose(1, 0), np.array([[1], [0], [0]])
 
     def __str__(self):
         return f"reader:{self.table},time:{self.execute_time}"
@@ -237,8 +244,13 @@ def embading_word(word):
 
 def extract_join_type(operator):
     # operator = operator.replace(' ', '')
+
+    # erase 'CARTESIAN' keyword in physical plan that logical plan does not have
+    if 'CARTESIAN' in operator:
+        operator = operator.replace('CARTESIAN', '')
+
     index = operator.find(',')
-    type_str = operator[: index]
+    type_str = (operator[: index]).strip()
     return type_str
 
 
@@ -333,11 +345,7 @@ def extract_join_info(node):
     return current_node
 
 
-def extract_join_tree(data_path):
-    data = None
-    with open(data_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    # iterate data find the root join node
+def extract_join_tree(data):
     current_node = data
     # TODO check join type
     while current_node:
@@ -350,6 +358,14 @@ def extract_join_tree(data_path):
         else:
             current_node = None
     return current_node
+
+
+def extract_join_tree_from_path(data_path):
+    data = None
+    with open(data_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    # iterate data find the root join node
+    return extract_join_tree(data)
 
 
 class State():
@@ -443,8 +459,7 @@ def convert_tree_to_trajectory(node):
     actions_length = len(join_order_reverse)
     # Iterate actions and foramt trajectories
     trajectories = []
-    print(join_order_reverse)
-    print(rewards)
+
     for i in range(1, actions_length):
         state = State(join_order_reverse[:i],
                       join_trees[i-1], join_order_reverse[i:])
@@ -454,5 +469,5 @@ def convert_tree_to_trajectory(node):
         state = State(join_order_reverse, join_trees[-1], [])
         trajectories.append(Observation(state, None, 0))
     # Construct trajectories
-    print([t.state.is_done for t in trajectories])
+
     return trajectories

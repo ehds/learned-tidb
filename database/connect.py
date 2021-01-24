@@ -4,6 +4,7 @@ import MySQLdb
 import json
 import re
 from utils.extract import convert_analyze_to_object
+from utils.file_helper import write_db_info
 
 
 class Column():
@@ -40,6 +41,7 @@ class DB():
         self.database = database
         self.tables = []
         self.columns = {}
+        # get db info
         self._init_db_info()
 
     def _init_db_info(self):
@@ -51,6 +53,13 @@ class DB():
         for table in self.tables:
             for column in self.columns[table]:
                 self.unique_columns.append(f'{self.database}.{table}.{column}')
+
+        dbinfo = {}
+        dbinfo["name"] = self.database
+        dbinfo["tables"] = self.tables
+        dbinfo["columns"] = self.columns
+        dbinfo["flatten_columns"] = self.unique_columns
+        write_db_info(dbinfo, self.database)
 
     def analyze(self, sql):
         analyze_sql = f"explain analyze {sql}"

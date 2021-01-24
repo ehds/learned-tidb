@@ -191,7 +191,6 @@ class BinaryTreeConv(nn.Module):
         trees, idxes = flat_data
         orig_idxes = idxes
         idxes = idxes.expand(-1, -1, self.__in_channels).transpose(1, 2)
-        print(trees.shape, idxes.shape)
         expanded = torch.gather(trees, 2, idxes)
 
         results = self.weights(expanded)
