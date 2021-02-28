@@ -95,12 +95,12 @@ class JoinOrderDQN(object):
         self.replay_buffer = ReplayBuffer(buffer_size, batch_size)
         # self.q_net = MLPQFunction(obs_dim, act_dim, [32])
         self.q_net = TreeCNNQFunction(obs_dim, 32, act_dim)
-        self.train_steps = 50
+        self.train_steps = 1000
         self.batch_size = batch_size
         self.gamma = 0.99
         self.clippng_norm = 10
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
+        self.q_net.to(self.device)
     def get_best_action(self, state, actions):
         costs = []
         # get encoding of state and actions
@@ -125,6 +125,8 @@ class JoinOrderDQN(object):
         for query in queries:
             # get actual  execution info
             execution_info = self.database.analyze(query)
+            if execution_info == None:
+                continue
             # add to replay buffer TODO save it
             join_tree = extract_join_tree(execution_info)
             trajectories = convert_tree_to_trajectory(join_tree)
@@ -138,13 +140,13 @@ class JoinOrderDQN(object):
 
         q_optimizer = Adam(self.q_net.parameters(), lr=1e-3)
 
-        self.q_net.to(self.device)
         self.q_net.train()
-        for step in range(self.train_steps):
+        losses = []
+        for step in range(1,self.train_steps):
             q_optimizer.zero_grad()
             # get batch data
             # act
-            self.act(num=4)
+            self.act(num=1)
             batch = self.replay_buffer.sample(self.batch_size)
             states, actions, rewards, next_states, dones = batch
             Q = self.q_net(states, actions)
@@ -157,8 +159,12 @@ class JoinOrderDQN(object):
             Q_expected = rewards+self.gamma*Q_next*(1-dones)
 
             loss = F.mse_loss(Q_expected, Q)
+            losses.append(loss.item())
             # update network
             loss.backward()
             nn.utils.clip_grad_norm_(
                 self.q_net.parameters(), self.clippng_norm)
             q_optimizer.step()
+            if step % 50 == 0:
+                print("mean loss:",np.mean(losses))
+                losses = []

@@ -63,12 +63,14 @@ class DB():
 
     def analyze(self, sql):
         analyze_sql = f"explain analyze {sql}"
-        data = self.cursor.execute(analyze_sql)
         # Expected to get json format analyzeinfo
-        data = self.cursor.fetchone()[0]
-        # print(data)
-        data = json.loads(data)
-
+        try:
+            data = self.cursor.execute(analyze_sql)
+            data = self.cursor.fetchone()[0]
+            data = json.loads(data.encode('utf-8'))
+        except Exception as e:
+            print(e)
+            return None
         return convert_analyze_to_object(data)
 
     def get_all_tables(self):

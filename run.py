@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from learnedjoin.DQN.dqn import JoinOrderDQN
 from database.connect import DB
 from utils.file_helper import write_json
@@ -24,9 +25,9 @@ def train_model(model: JoinOrderDQN):
 if __name__ == '__main__':
     logging.basicConfig()
     workload = WorkLoad(
-        "/home/ehds/data/join-order-benchmark-master/query_sql")
+        "./join-order-benchmark")
 
-    db = DB('127.0.0.1', 'root', '', 'imdb', 4000)
+    db = DB('172.19.0.4', 'root', '', 'job', 4000)
     a = extract_join_tree_from_path(os.path.join("data", "33c.json"))
     a.encode()
     b = convert_tree_to_trajectory(a)
