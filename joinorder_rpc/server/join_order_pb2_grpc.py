@@ -123,6 +123,11 @@ class JoinOrderStub(object):
             request_serializer=join__order__pb2.State.SerializeToString,
             response_deserializer=join__order__pb2.HelloReply.FromString,
         )
+        self.IsDQN = channel.unary_unary(
+            '/join_order.JoinOrder/IsDQN',
+            request_serializer=join__order__pb2.Empty.SerializeToString,
+            response_deserializer=join__order__pb2.BoolValue.FromString,
+        )
 
 
 class JoinOrderServicer(object):
@@ -140,6 +145,12 @@ class JoinOrderServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def IsDQN(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_JoinOrderServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -152,6 +163,11 @@ def add_JoinOrderServicer_to_server(servicer, server):
             servicer.GetAction,
             request_deserializer=join__order__pb2.State.FromString,
             response_serializer=join__order__pb2.HelloReply.SerializeToString,
+        ),
+        'IsDQN': grpc.unary_unary_rpc_method_handler(
+            servicer.IsDQN,
+            request_deserializer=join__order__pb2.Empty.FromString,
+            response_serializer=join__order__pb2.BoolValue.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -195,5 +211,22 @@ class JoinOrder(object):
         return grpc.experimental.unary_unary(request, target, '/join_order.JoinOrder/GetAction',
                                              join__order__pb2.State.SerializeToString,
                                              join__order__pb2.HelloReply.FromString,
+                                             options, channel_credentials,
+                                             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def IsDQN(request,
+              target,
+              options=(),
+              channel_credentials=None,
+              call_credentials=None,
+              insecure=False,
+              compression=None,
+              wait_for_ready=None,
+              timeout=None,
+              metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/join_order.JoinOrder/IsDQN',
+                                             join__order__pb2.Empty.SerializeToString,
+                                             join__order__pb2.BoolValue.FromString,
                                              options, channel_credentials,
                                              insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -37,7 +37,10 @@ class ReplayBuffer(object):
                 observations)
             return states, actions, rewards, next_states, dones
         else:
-            return observations
+            return ([o.state for o in observations], [o.action for o in observations],
+                    [o.reward for o in observations], [
+                o.next_state for o in observations],
+                [o.done for o in observations])
 
     def separate_out_data_types(self, experiences):
         """Puts the sampled experience into the correct format for a PyTorch neural network"""

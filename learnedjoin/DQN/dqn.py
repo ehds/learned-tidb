@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from learnedjoin.DQN.replay_buffer import ReplayBuffer
 import learnedjoin.DQN.tcnn as tcnn
 from utils.join_order import extract_join_tree, convert_tree_to_trajectory
+from learnedjoin.DQN.tree_lstm import TreeTLSTMQFunction
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -52,10 +53,6 @@ class TreeCNNQFunction(nn.Module):
         return inputs
 
 
-class TreeLSTMQFuntion(nn.Module):
-    pass
-
-
 class StateTreeEncoder(nn.Module):
     def __init__(self, obs_dim, output_dim):
         super(StateTreeEncoder, self).__init__()
@@ -92,27 +89,28 @@ class JoinOrderDQN(object):
         # database to train
         self.database = database
         self.workload = workload
+        #self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = 'cpu'
         self.replay_buffer = ReplayBuffer(buffer_size, batch_size)
         # self.q_net = MLPQFunction(obs_dim, act_dim, [32])
-        self.q_net = TreeCNNQFunction(obs_dim, 32, act_dim)
-        self.train_steps = 1000
+        # self.q_net = TreeCNNQFunction(obs_dim, 32, act_dim)
+        self.q_net = TreeTLSTMQFunction(
+            obs_dim, database.get_all_tables(), database.unique_columns, self.device)
+        # self.tree_lstm = TreeLSTM(obs_dim)
+        self.train_steps = 2000
         self.batch_size = batch_size
         self.gamma = 0.99
         self.clippng_norm = 10
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
         self.q_net.to(self.device)
+
     def get_best_action(self, state, actions):
         costs = []
         # get encoding of state and actions
-        current_join_tree = torch.Tensor([state[0]]).to(self.device)
-        tree_index = torch.LongTensor([state[1]]).to(self.device)
         for action in actions:
-            action_tree = torch.Tensor([action[0]]).to(self.device)
-            action_index = torch.LongTensor([action[1]]).to(self.device)
             with torch.no_grad():
                 # q_value batch*1
-                q_value = self.q_net((current_join_tree, tree_index),
-                                     (action_tree, action_index))
+                q_value = self.q_net([state], [action])
             costs.append(q_value.flatten().cpu().numpy()[0])
         return np.argmin(costs)
 
@@ -133,7 +131,7 @@ class JoinOrderDQN(object):
             for i in range(len(trajectories)-1):
                 ob, next_ob = trajectories[i], trajectories[i+1]
                 self.replay_buffer.add_observation(
-                    ob.state.encode(), ob.action.encode(), ob.reward, next_ob.state.encode(), next_ob.state.is_done)
+                    ob.state, ob.action, ob.reward, next_ob.state, next_ob.state.is_done)
 
     def train(self):
         # TODO off-line to on-line
@@ -142,13 +140,16 @@ class JoinOrderDQN(object):
 
         self.q_net.train()
         losses = []
-        for step in range(1,self.train_steps):
-            q_optimizer.zero_grad()
+        for step in range(1, self.train_steps):
+
             # get batch data
             # act
             self.act(num=1)
-            batch = self.replay_buffer.sample(self.batch_size)
+            batch = self.replay_buffer.sample(self.batch_size, False)
             states, actions, rewards, next_states, dones = batch
+            rewards = torch.FloatTensor(rewards).to(self.device)
+            dones = torch.FloatTensor(dones).to(self.device)
+
             Q = self.q_net(states, actions)
             # compute expeacted Q(s_i+1,pi(a))
             # TODO search a
@@ -158,13 +159,14 @@ class JoinOrderDQN(object):
 
             Q_expected = rewards+self.gamma*Q_next*(1-dones)
 
-            loss = F.mse_loss(Q_expected, Q)
+            loss = F.smooth_l1_loss(Q, Q_expected, size_average=True)
             losses.append(loss.item())
             # update network
+            q_optimizer.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(
-                self.q_net.parameters(), self.clippng_norm)
+            # nn.utils.clip_grad_norm_(
+            #     self.q_net.parameters(), self.clippng_norm)
             q_optimizer.step()
             if step % 50 == 0:
-                print("mean loss:",np.mean(losses))
-                losses = []
+                print(len(losses))
+                print("mean loss:", np.mean(losses))

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'\n\033io.grpc.examples.helloworldB\017HelloWorldProtoP\001Z$github.com/pingcap/tidb/planner/core',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"\xa7\x01\n\x0bLogicalNode\x12\x30\n\tjoin_node\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNodeH\x00\x12\x32\n\ntable_node\x18\x02 \x01(\x0b\x32\x1c.join_order.LogicalTableNodeH\x00\x12*\n\tchildrens\x18\x03 \x03(\x0b\x32\x17.join_order.LogicalNodeB\x06\n\x04node\"\xc7\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x11\n\tjoin_type\x18\x02 \x01(\t\x12\x33\n\x0ejoin_childrens\x18\x03 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x35\n\x0ftable_childrens\x18\x04 \x03(\x0b\x32\x1c.join_order.LogicalTableNode\x12)\n\nconditions\x18\x05 \x03(\x0b\x32\x15.join_order.Condition\"]\n\x10LogicalTableNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x12\n\ntable_name\x18\x02 \x01(\t\x12)\n\nconditions\x18\x03 \x03(\x0b\x32\x15.join_order.Condition\"e\n\x05State\x12\x32\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x17.join_order.LogicalNode\x12(\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x17.join_order.LogicalNode2\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\x8c\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
+  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"\xa7\x01\n\x0bLogicalNode\x12\x30\n\tjoin_node\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNodeH\x00\x12\x32\n\ntable_node\x18\x02 \x01(\x0b\x32\x1c.join_order.LogicalTableNodeH\x00\x12*\n\tchildrens\x18\x03 \x03(\x0b\x32\x17.join_order.LogicalNodeB\x06\n\x04node\"\xc7\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x11\n\tjoin_type\x18\x02 \x01(\t\x12\x33\n\x0ejoin_childrens\x18\x03 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x35\n\x0ftable_childrens\x18\x04 \x03(\x0b\x32\x1c.join_order.LogicalTableNode\x12)\n\nconditions\x18\x05 \x03(\x0b\x32\x15.join_order.Condition\"]\n\x10LogicalTableNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x12\n\ntable_name\x18\x02 \x01(\t\x12)\n\nconditions\x18\x03 \x03(\x0b\x32\x15.join_order.Condition\"e\n\x05State\x12\x32\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x17.join_order.LogicalNode\x12(\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x17.join_order.LogicalNode\"\x07\n\x05\x45mpty\"\x1a\n\tBoolValue\x12\r\n\x05value\x18\x01 \x01(\x08\x32\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\xc1\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x12\x33\n\x05IsDQN\x12\x11.join_order.Empty\x1a\x15.join_order.BoolValue\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
 )
 
 
@@ -323,6 +323,63 @@ _STATE = _descriptor.Descriptor(
   serialized_end=706,
 )
 
+
+_EMPTY = _descriptor.Descriptor(
+  name='Empty',
+  full_name='join_order.Empty',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=708,
+  serialized_end=715,
+)
+
+
+_BOOLVALUE = _descriptor.Descriptor(
+  name='BoolValue',
+  full_name='join_order.BoolValue',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='value', full_name='join_order.BoolValue.value', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=717,
+  serialized_end=743,
+)
+
 _LOGICALNODE.fields_by_name['join_node'].message_type = _LOGICALJOINNODE
 _LOGICALNODE.fields_by_name['table_node'].message_type = _LOGICALTABLENODE
 _LOGICALNODE.fields_by_name['childrens'].message_type = _LOGICALNODE
@@ -345,6 +402,8 @@ DESCRIPTOR.message_types_by_name['LogicalNode'] = _LOGICALNODE
 DESCRIPTOR.message_types_by_name['LogicalJoinNode'] = _LOGICALJOINNODE
 DESCRIPTOR.message_types_by_name['LogicalTableNode'] = _LOGICALTABLENODE
 DESCRIPTOR.message_types_by_name['State'] = _STATE
+DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
+DESCRIPTOR.message_types_by_name['BoolValue'] = _BOOLVALUE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 HelloRequest = _reflection.GeneratedProtocolMessageType('HelloRequest', (_message.Message,), {
@@ -396,6 +455,20 @@ State = _reflection.GeneratedProtocolMessageType('State', (_message.Message,), {
   })
 _sym_db.RegisterMessage(State)
 
+Empty = _reflection.GeneratedProtocolMessageType('Empty', (_message.Message,), {
+  'DESCRIPTOR' : _EMPTY,
+  '__module__' : 'join_order_pb2'
+  # @@protoc_insertion_point(class_scope:join_order.Empty)
+  })
+_sym_db.RegisterMessage(Empty)
+
+BoolValue = _reflection.GeneratedProtocolMessageType('BoolValue', (_message.Message,), {
+  'DESCRIPTOR' : _BOOLVALUE,
+  '__module__' : 'join_order_pb2'
+  # @@protoc_insertion_point(class_scope:join_order.BoolValue)
+  })
+_sym_db.RegisterMessage(BoolValue)
+
 
 DESCRIPTOR._options = None
 
@@ -406,8 +479,8 @@ _GREETER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=709,
-  serialized_end=851,
+  serialized_start=746,
+  serialized_end=888,
   methods=[
   _descriptor.MethodDescriptor(
     name='SayHello',
@@ -442,8 +515,8 @@ _JOINORDER = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=854,
-  serialized_end=994,
+  serialized_start=891,
+  serialized_end=1084,
   methods=[
   _descriptor.MethodDescriptor(
     name='TestJoinNode',
@@ -462,6 +535,16 @@ _JOINORDER = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_STATE,
     output_type=_HELLOREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='IsDQN',
+    full_name='join_order.JoinOrder.IsDQN',
+    index=2,
+    containing_service=None,
+    input_type=_EMPTY,
+    output_type=_BOOLVALUE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

@@ -31,6 +31,7 @@ service Greeter {
 service JoinOrder{
   rpc TestJoinNode(LogicalJoinNode) returns(HelloReply){}
   rpc GetAction(State) returns(HelloReply){}
+  rpc IsDQN(Empty) returns (BoolValue){}
 }
 // The request message containing the user's name.
 message HelloRequest {
@@ -73,5 +74,9 @@ message State{
   repeated LogicalNode actions = 2;
 }
 
+message Empty{ 
+}
 
-
+message BoolValue{
+  bool value = 1;
+}

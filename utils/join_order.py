@@ -42,7 +42,7 @@ class Plan():
         execution_time = float(match_time.group(1))
         time_unit = match_time.group(2)
         if time_unit not in units:
-            time_unit='µs'
+            time_unit = 'µs'
         assert time_unit in units, f"time unit {time_unit} not existis"
         time_unit_index = units.index(time_unit)
 
@@ -85,7 +85,7 @@ class JoinPlan(Plan):
         return self.preorder_encode()
 
     def preorder_encode(self):
-        r""" TreeCNN need preorder encoding 
+        r""" TreeCNN need preorder encoding
 
         Return:
             features: [in_channel * nodes]
@@ -302,7 +302,7 @@ def extract_table_reader(node):
         table_name = access_object.split(' ')[0].split(',')[0].split(':')[1]
         table_reader.execute_time = node["AnalyzeInfo"]["time"] if "time" in node["AnalyzeInfo"] else "0s"
         return table_reader
-        
+
     assert len(childrens) > 0
     q = queue.Queue()
     q.put(node)
@@ -374,7 +374,6 @@ def extract_join_tree_from_path(data_path):
     data = None
     with open(data_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    print(data)
     # iterate data find the root join node
     return extract_join_tree(data)
 
@@ -467,7 +466,7 @@ def convert_tree_to_trajectory(node):
     join_order_reverse.reverse()
     rewards.reverse()
     join_trees.reverse()
-    rewards = [math.log(x+0.00001) for x in rewards]
+    rewards = [math.log(x+1) for x in rewards]
     actions_length = len(join_order_reverse)
     # Iterate actions and foramt trajectories
     trajectories = []

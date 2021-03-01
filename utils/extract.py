@@ -23,6 +23,7 @@ def extract_object_from_str2(data):
 
     return json.loads(data)
 
+
 def extract_object_from_str(data):
     data = data.replace(' ', '')
     execution_time_match = re.search(r'time:(.*?)[,}$]', data)
@@ -30,6 +31,8 @@ def extract_object_from_str(data):
     if execution_time_match != None:
         execution_time = execution_time_match.group(1)
     return json.loads(f'{{"time":"{execution_time}"}}')
+
+
 def convert_analyze_to_object(data):
     """ make analyze info str to json format """
     if "AnalyzeInfo" in data:
