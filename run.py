@@ -35,6 +35,6 @@ if __name__ == '__main__':
     b = convert_tree_to_trajectory(a)
     obs_dim = b[0].state.encode()[0].shape[0]
     act_dim = b[0].action.encode()[0].shape[0]
-    model = JoinOrderDQN(db, workload, 32, 1, obs_dim, act_dim)
+    model = JoinOrderDQN(db, workload, 32, 1, obs_dim, act_dim, False)
     threading.Thread(target=train_model, args=(model,)).start()
     server.serve(model, True)

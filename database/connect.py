@@ -77,15 +77,18 @@ class DB():
     def explain(self, sql, analyze=False):
         sql_prefix = "explain " + ("analyze " if analyze else "")
         explain_sql = sql_prefix + sql
+        print(explain_sql)
         try:
             data = self.cursor.execute(explain_sql)
             # Expected to get json format analyzeinfo
             data = self.cursor.fetchone()[0]
             data = json.loads(data)
-            return data
+            return convert_analyze_to_object(data)
         except Exception as e:
-            print("expalin error", e)
-
+            print(e)
+            if "gone away" in str(e):
+                print("reconnect")
+                self.reconnect()
             return None
 
     def get_est_rows(self, sql):
@@ -101,25 +104,17 @@ class DB():
         analyze_info = self.explain(sql, analyze=True)
         if analyze_info == None:
             return 1e10
-        limit_analyze = analyze_info["AnalyzeInfo"]
-        execution_time_str = limit_analyze.split(',')[0].split(':')[1]
-        latency = convert_execute_time_to_ms(execution_time_str)
-        return latency
+        latency = convert_execute_time_to_ms(
+            analyze_info['AnalyzeInfo']['time'])
+        assert latency >= 0
+        return max(0.000001, latency)
 
     def analyze(self, sql):
-        analyze_sql = f"explain analyze {sql}"
+        analyze_info = self.explain(sql, True)
         # Expected to get json format analyzeinfo
-        try:
-            data = self.cursor.execute(analyze_sql)
-            data = self.cursor.fetchone()[0]
-            data = json.loads(data.encode('utf-8'))
-        except Exception as e:
-            print(e)
-            if "gone away" in str(e):
-                print("reconnect")
-                self.reconnect()
-            return None
-        return convert_analyze_to_object(data)
+        if analyze_info != None:
+            return analyze_info
+        return None
 
     def get_all_tables(self):
         query_sql = f"select table_name from information_schema.tables where table_schema='{self.database}'"

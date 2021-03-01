@@ -10,6 +10,7 @@ from learnedjoin.DQN.tree_lstm import TreeTLSTMQFunction
 from datetime import datetime
 import os
 import math
+import random
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -79,7 +80,7 @@ class StateTreeEncoder(nn.Module):
 
 
 class JoinOrderDQN(object):
-    def __init__(self, database, workload, buffer_size, batch_size, obs_dim, act_dim):
+    def __init__(self, database, workload, buffer_size, batch_size, obs_dim, act_dim, latency_train=False):
         r""" Join order policy model
             Args:
                 database: which database you want to train
@@ -92,7 +93,7 @@ class JoinOrderDQN(object):
         # database to train
         self.database = database
         self.workload = workload
-        #self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = 'cpu'
         self.replay_buffer = ReplayBuffer(buffer_size, batch_size)
         # self.q_net = MLPQFunction(obs_dim, act_dim, [32])
@@ -104,18 +105,26 @@ class JoinOrderDQN(object):
         self.batch_size = batch_size
         self.gamma = 0.99
         self.clippng_norm = 10
-
+        self.steps_done = 0
         self.q_net.to(self.device)
+        self.latency_train = latency_train
+        self.load_model()
 
     def get_best_action(self, state, actions):
-        costs = []
+
         # get encoding of state and actions
-        for action in actions:
+        eps = 0.05+(0.9)*math.exp(-1. * self.steps_done / 200)
+        self.steps_done = self.steps_done+1
+        if random.random() > eps:
+            costs = []
             with torch.no_grad():
-                # q_value batch*1
-                q_value = self.q_net([state], [action])
-            costs.append(q_value.flatten().cpu().numpy()[0])
-        return np.argmin(costs)
+                for action in actions:
+                    # q_value batch*1
+                    q_value = self.q_net([state], [action])
+                costs.append(q_value.flatten().cpu().numpy()[0])
+            return np.argmin(costs)
+        else:
+            return random.randrange(len(actions))
 
     def act(self, num=1):
         r""" Act num query to the database for collecting some actual 
@@ -126,12 +135,13 @@ class JoinOrderDQN(object):
         # TODO parallel execute
         for query in queries:
             # get actual  execution info
-            execution_info = self.database.analyze(query)
+            execution_info = self.database.explain(query, self.latency_train)
             if execution_info == None:
                 continue
             # add to replay buffer TODO save it
             join_tree = extract_join_tree(execution_info)
-            trajectories = convert_tree_to_trajectory(join_tree)
+            trajectories = convert_tree_to_trajectory(
+                join_tree, self.latency_train)
             for i in range(len(trajectories)-1):
                 ob, next_ob = trajectories[i], trajectories[i+1]
                 self.replay_buffer.add_observation(
@@ -142,8 +152,8 @@ class JoinOrderDQN(object):
         path = os.path.join('model', 'dqn.pth')
         torch.save(self.q_net.state_dict(), path)
 
-    def load_model(self, path):
-        path = os.path.join('model', +'dqn.pth')
+    def load_model(self):
+        path = os.path.join('model', 'dqn.pth')
         if os.path.exists(path):
             self.q_net.load_state_dict(torch.load(path))
             self.q_net.train()
@@ -201,7 +211,7 @@ class JoinOrderDQN(object):
         self.q_net.eval()
 
         perfomance_ratio = []
-        for q in validate_set:
+        for q in validate_set[:10]:
             # get db original cost
             self.set_dqn(False)
             db_cost = self.database.get_latency(q)

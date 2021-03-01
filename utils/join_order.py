@@ -356,11 +356,13 @@ def extract_join_info(node):
         current_node.left_node = extract_join_info(childrens[0])
         current_node.right_node = extract_join_info(childrens[1])
         current_node.execute_time = analyze_info["time"]
+        current_node.est_rows = node["estRows"]
     else:
         # Table Reader
         # assert 'TableReader' in node['id']
         # extract selection if need
         current_node = extract_table_reader(node)
+        current_node.est_rows = node['estRows']
     return current_node
 
 
@@ -436,7 +438,7 @@ class Observation():
         return self.__str__()
 
 
-def convert_tree_to_trajectory(node):
+def convert_tree_to_trajectory(node, latency=False):
     r"""Convert an join tree to trajectory.
 
     An trajectory includes[state, reward, next state]
@@ -444,6 +446,7 @@ def convert_tree_to_trajectory(node):
 
     Args:
         node: the root of left deep join tree
+        latency: True: latency Flase est_rows
     Return:
         List of Observations
     """
@@ -460,7 +463,10 @@ def convert_tree_to_trajectory(node):
         action = Action(current_node.right_node, current_node.conditions)
         join_order_reverse.append(action)
         join_trees.append(current_node)
-        rewards.append(current_node.execute_time)
+        if latency:
+            rewards.append(current_node.execute_time)
+        else:
+            rewards.append(current_node.est_rows)
         current_node = current_node.left_node
     else:
         join_order_reverse.append(
