@@ -100,6 +100,9 @@ class JoinOrderDQN(object):
         # self.q_net = TreeCNNQFunction(obs_dim, 32, act_dim)
         self.q_net = TreeTLSTMQFunction(
             obs_dim, database.get_all_tables(), database.unique_columns, self.device)
+        self.target_net = TreeTLSTMQFunction(
+            obs_dim, database.get_all_tables(), database.unique_columns, self.device)
+        self.target_net.eval()
         # self.tree_lstm = TreeLSTM(obs_dim)
         self.train_steps = 2000
         self.batch_size = batch_size
@@ -178,9 +181,8 @@ class JoinOrderDQN(object):
             Q = self.q_net(states, actions)
             # compute expeacted Q(s_i+1,pi(a))
             # TODO search a
-            Q_next = 0
-            with torch.no_grad():
-                Q_next = self.q_net(next_states, actions)
+
+            Q_next = self.target_net(next_states, actions)
 
             Q_expected = rewards+self.gamma*Q_next*(1-dones)
 
@@ -200,6 +202,7 @@ class JoinOrderDQN(object):
                 if mrc > best_mrc:
                     best_mrc = mrc
                 self.save_model()
+                self.target_net.load_state_dict(self.q_net.state_dict())
 
     def set_dqn(self, flag):
         with open('config.conf', 'w') as f:

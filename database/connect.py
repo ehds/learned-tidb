@@ -77,7 +77,6 @@ class DB():
     def explain(self, sql, analyze=False):
         sql_prefix = "explain " + ("analyze " if analyze else "")
         explain_sql = sql_prefix + sql
-        print(explain_sql)
         try:
             data = self.cursor.execute(explain_sql)
             # Expected to get json format analyzeinfo
