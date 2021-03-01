@@ -9,6 +9,28 @@ import numpy as np
 from utils.file_helper import get_db_info
 
 
+def convert_execute_time_to_ms(value):
+    r""" Unit conversion (ms)
+        reference: tidb/util/execdetails/execdetails.go#FormatDuration
+        [s,ms,us,ns]
+        """
+    units = ['ns', 'µs', 'ms', 's']
+    unified_unit_index = 2  # ms
+
+    # match time string format: 22.22us
+    match_time = re.search(r'(\d*[\.]*\d*)(\w+)', value)
+    execution_time = float(match_time.group(1))
+    time_unit = match_time.group(2)
+    if time_unit not in units:
+        time_unit = 'µs'
+    time_unit_index = units.index(time_unit)
+
+    # unfied unit and rounded to two decimals
+    unfied_execute_time = execution_time * \
+        math.pow(10, (time_unit_index-unified_unit_index)*3)
+    return round(unfied_execute_time, 2)
+
+
 class Plan():
     r""" Abstract class for logical plan and physical plan """
 
@@ -34,21 +56,8 @@ class Plan():
         reference: tidb/util/execdetails/execdetails.go#FormatDuration
         [s,ms,us,ns]
         """
-        units = ['ns', 'µs', 'ms', 's']
-        unified_unit_index = 2  # ms
-
-        # match time string format: 22.22us
-        match_time = re.search(r'(\d*[\.]*\d*)(\w+)', value)
-        execution_time = float(match_time.group(1))
-        time_unit = match_time.group(2)
-        if time_unit not in units:
-            time_unit = 'µs'
-        assert time_unit in units, f"time unit {time_unit} not existis"
-        time_unit_index = units.index(time_unit)
-
         # unfied unit and rounded to two decimals
-        unfied_execute_time = execution_time * \
-            math.pow(10, (time_unit_index-unified_unit_index)*3)
+        unfied_execute_time = convert_execute_time_to_ms(value)
         self._execute_time = round(unfied_execute_time, 2)
 
 

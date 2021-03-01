@@ -7,6 +7,9 @@ from learnedjoin.DQN.replay_buffer import ReplayBuffer
 import learnedjoin.DQN.tcnn as tcnn
 from utils.join_order import extract_join_tree, convert_tree_to_trajectory
 from learnedjoin.DQN.tree_lstm import TreeTLSTMQFunction
+from datetime import datetime
+import os
+import math
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -119,6 +122,7 @@ class JoinOrderDQN(object):
         physical plan and execution time"""
         assert num > 0
         queries = self.workload.sample(num)
+        # queries = self.workload.get_all_query()
         # TODO parallel execute
         for query in queries:
             # get actual  execution info
@@ -133,18 +137,29 @@ class JoinOrderDQN(object):
                 self.replay_buffer.add_observation(
                     ob.state, ob.action, ob.reward, next_ob.state, next_ob.state.is_done)
 
+    def save_model(self):
+        # date_str = datetime.now().strftime('%m-%d-%Y-%H-%M-%S')
+        path = os.path.join('model', 'dqn.pth')
+        torch.save(self.q_net.state_dict(), path)
+
+    def load_model(self, path):
+        path = os.path.join('model', +'dqn.pth')
+        if os.path.exists(path):
+            self.q_net.load_state_dict(torch.load(path))
+            self.q_net.train()
+
     def train(self):
         # TODO off-line to on-line
 
         q_optimizer = Adam(self.q_net.parameters(), lr=1e-3)
-
+        best_mrc = 1e10
         self.q_net.train()
         losses = []
-        for step in range(1, self.train_steps):
+        for step in range(self.train_steps):
 
             # get batch data
             # act
-            self.act(num=1)
+            self.act(num=4)
             batch = self.replay_buffer.sample(self.batch_size, False)
             states, actions, rewards, next_states, dones = batch
             rewards = torch.FloatTensor(rewards).to(self.device)
@@ -167,6 +182,33 @@ class JoinOrderDQN(object):
             # nn.utils.clip_grad_norm_(
             #     self.q_net.parameters(), self.clippng_norm)
             q_optimizer.step()
-            if step % 50 == 0:
+            if (step+1) % 50 == 0:
                 print(len(losses))
                 print("mean loss:", np.mean(losses))
+                mean, mrc = self.validate()
+                print(f"mean:{mean}, mrc:{mrc}")
+                if mrc > best_mrc:
+                    best_mrc = mrc
+                self.save_model()
+
+    def set_dqn(self, flag):
+        with open('config.conf', 'w') as f:
+            f.write(str(flag))
+
+    def validate(self):
+        validate_set = self.workload.get_all_query()
+        # change server policy to greedy
+        self.q_net.eval()
+
+        perfomance_ratio = []
+        for q in validate_set:
+            # get db original cost
+            self.set_dqn(False)
+            db_cost = self.database.get_latency(q)
+            self.set_dqn(True)
+            dqn_cost = self.database.get_latency(q)
+            perfomance_ratio.append(math.log(dqn_cost)-math.log(db_cost))
+
+        mean = np.mean(np.exp(perfomance_ratio))
+        mrc = np.exp(np.sum(perfomance_ratio)/len(perfomance_ratio))
+        return mean, mrc

@@ -25,6 +25,9 @@ class WorkLoad(object):
         full_path = os.path.join(self.workload_path, file_name)
         return WorkLoad._get_sql_from_file(full_path)
 
+    def get_all_query(self):
+        return [WorkLoad._get_sql_from_file(f) for f in self.sql_files]
+
     @staticmethod
     def _get_sql_from_file(file_path, encoding='utf-8'):
         if os.path.exists(file_path):

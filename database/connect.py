@@ -5,6 +5,8 @@ import json
 import re
 from utils.extract import convert_analyze_to_object
 from utils.file_helper import write_db_info
+from utils.join_order import convert_execute_time_to_ms
+import math
 
 
 class Column():
@@ -35,14 +37,25 @@ class DB():
             charset: charset default utf-8
         """
 
-        db = MySQLdb.connect(host, user, passwd,
-                             database, port, charset)
-        self.cursor = db.cursor()
+        self.db = MySQLdb.connect(host, user, passwd,
+                                  database, port, charset)
+        self.host = host
+        self.user = user
+        self.passwd = passwd
         self.database = database
+        self.port = port
+        self.charset = charset
+        self.cursor = self.db.cursor()
         self.tables = []
         self.columns = {}
         # get db info
         self._init_db_info()
+
+    def reconnect(self):
+        self.db.commit()
+        self.db.close()
+        self.db = MySQLdb.connect(self.host, self.user, self.passwd,
+                                  self.database, self.port, self.charset)
 
     def _init_db_info(self):
         self.tables = self.get_all_tables()
@@ -61,6 +74,38 @@ class DB():
         dbinfo["flatten_columns"] = self.unique_columns
         write_db_info(dbinfo, self.database)
 
+    def explain(self, sql, analyze=False):
+        sql_prefix = "explain " + ("analyze " if analyze else "")
+        explain_sql = sql_prefix + sql
+        try:
+            data = self.cursor.execute(explain_sql)
+            # Expected to get json format analyzeinfo
+            data = self.cursor.fetchone()[0]
+            data = json.loads(data)
+            return data
+        except Exception as e:
+            print("expalin error", e)
+
+            return None
+
+    def get_est_rows(self, sql):
+        explain_info = self.explain(sql)
+        if explain_info == None:
+            return 1e10
+        # limit always at the top of explain info
+        est_rows = explain_info['estRows']
+        # act_rows = limit_info['ActRows']
+        return float(est_rows)
+
+    def get_latency(self, sql):
+        analyze_info = self.explain(sql, analyze=True)
+        if analyze_info == None:
+            return 1e10
+        limit_analyze = analyze_info["AnalyzeInfo"]
+        execution_time_str = limit_analyze.split(',')[0].split(':')[1]
+        latency = convert_execute_time_to_ms(execution_time_str)
+        return latency
+
     def analyze(self, sql):
         analyze_sql = f"explain analyze {sql}"
         # Expected to get json format analyzeinfo
@@ -70,6 +115,9 @@ class DB():
             data = json.loads(data.encode('utf-8'))
         except Exception as e:
             print(e)
+            if "gone away" in str(e):
+                print("reconnect")
+                self.reconnect()
             return None
         return convert_analyze_to_object(data)
 
