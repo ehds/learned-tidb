@@ -4,6 +4,8 @@ import torchfold
 import torch.nn as nn
 from utils.join_order import JoinPlan, TableReader
 import torch.nn.functional as F
+from learnedjoin.DQN.graph_conv import GraphConvolution
+import numpy as np
 
 
 class TreeLSTM(nn.Module):
@@ -42,6 +44,23 @@ class TreeRoot(nn.Module):
         return self.relu(self.FC(self.sum_pooling(tree_list)).view(-1, self.num_units))
 
 
+class GCN(nn.Module):
+    def __init__(self, nfeat, nhid, ofeat, dropout=0.8):
+        super(GCN, self).__init__()
+
+        self.gc1 = GraphConvolution(nfeat, nhid)
+        self.gc2 = GraphConvolution(nhid, ofeat)
+        self.dropout = dropout
+
+    def forward(self, x, adj):
+        x = F.relu(self.gc1(x, adj))
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = self.gc2(x, adj)
+        x = F.relu(x)
+        return x
+        # return F.log_softmax(x, dim=1)
+
+
 class TreeTLSTMQFunction(nn.Module):
     def __init__(self, size, all_tables, all_colums, device):
         super(TreeTLSTMQFunction, self).__init__()
@@ -57,7 +76,10 @@ class TreeTLSTMQFunction(nn.Module):
         self.tree_lstm = TreeLSTM(self.size)
         self.tree_root = TreeRoot(self.size)
         self.out = nn.Linear(size, 1)
-        self.fc = nn.Linear(2*size, size)
+        self.fc = nn.Linear(3*size, size)
+        # 1: join_vector size
+        self.gcn = GCN(1, 2*size, size, 0.8)
+        self.gcn_fc = nn.Linear(108, 1)
         self.device = device
 
     def table2index(self, table):
@@ -96,8 +118,20 @@ class TreeTLSTMQFunction(nn.Module):
                     return self.leaf(table_id)
 
     def forward(self, state, action):
-        tmp = [self.encoding_tree(s.join_tree)[0] for s in state]
-        state_encodings = torch.cat(tmp, dim=0)
+        state_encodings = torch.cat(
+            [self.encoding_tree(s.join_tree)[0] for s in state], dim=0)
+
+        # get origianl tree encoding
+        original_trees = [s.origin_tree.encoding_join_conditions()
+                          for s in state]
+        adjs = torch.FloatTensor(
+            np.array([t[0] for t in original_trees])).to(self.device)
+        join_vectors = torch.FloatTensor(
+            np.array([t[1] for t in original_trees])).to(self.device)
+        original_tree_encodings = self.gcn(join_vectors, adjs).transpose(2, 1)
+        original_tree_encodings = self.gcn_fc(
+            original_tree_encodings).squeeze(2)
+
         action_encoding = []
         for a in action:
             if type(a.join_table) == TableReader:
@@ -107,7 +141,8 @@ class TreeTLSTMQFunction(nn.Module):
             else:
                 action_encoding.append(self.encoding_tree(a.join_table)[0])
         action_encoding = torch.cat(action_encoding, dim=0)
-        x = torch.cat([state_encodings, action_encoding], dim=1)
+        x = torch.cat([state_encodings, action_encoding,
+                       original_tree_encodings], dim=1)
         inputx = self.fc(x)
         return self.out(F.relu(inputx))
         # return self.tree_root([state_encodings, action_encoding])

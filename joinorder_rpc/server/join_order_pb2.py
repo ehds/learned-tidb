@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'\n\033io.grpc.examples.helloworldB\017HelloWorldProtoP\001Z$github.com/pingcap/tidb/planner/core',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"\xa7\x01\n\x0bLogicalNode\x12\x30\n\tjoin_node\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNodeH\x00\x12\x32\n\ntable_node\x18\x02 \x01(\x0b\x32\x1c.join_order.LogicalTableNodeH\x00\x12*\n\tchildrens\x18\x03 \x03(\x0b\x32\x17.join_order.LogicalNodeB\x06\n\x04node\"\xc7\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x11\n\tjoin_type\x18\x02 \x01(\t\x12\x33\n\x0ejoin_childrens\x18\x03 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x35\n\x0ftable_childrens\x18\x04 \x03(\x0b\x32\x1c.join_order.LogicalTableNode\x12)\n\nconditions\x18\x05 \x03(\x0b\x32\x15.join_order.Condition\"]\n\x10LogicalTableNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x12\n\ntable_name\x18\x02 \x01(\t\x12)\n\nconditions\x18\x03 \x03(\x0b\x32\x15.join_order.Condition\"e\n\x05State\x12\x32\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x17.join_order.LogicalNode\x12(\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x17.join_order.LogicalNode\"\x07\n\x05\x45mpty\"\x1a\n\tBoolValue\x12\r\n\x05value\x18\x01 \x01(\x08\x32\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\xc1\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x12\x33\n\x05IsDQN\x12\x11.join_order.Empty\x1a\x15.join_order.BoolValue\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
+  serialized_pb=b'\n\x10join_order.proto\x12\njoin_order\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\nHelloReply\x12\x0f\n\x07message\x18\x01 \x01(\t\"+\n\tCondition\x12\x10\n\x08\x66uncname\x18\x01 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x02 \x03(\t\"\xa7\x01\n\x0bLogicalNode\x12\x30\n\tjoin_node\x18\x01 \x01(\x0b\x32\x1b.join_order.LogicalJoinNodeH\x00\x12\x32\n\ntable_node\x18\x02 \x01(\x0b\x32\x1c.join_order.LogicalTableNodeH\x00\x12*\n\tchildrens\x18\x03 \x03(\x0b\x32\x17.join_order.LogicalNodeB\x06\n\x04node\"\xc7\x01\n\x0fLogicalJoinNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x11\n\tjoin_type\x18\x02 \x01(\t\x12\x33\n\x0ejoin_childrens\x18\x03 \x03(\x0b\x32\x1b.join_order.LogicalJoinNode\x12\x35\n\x0ftable_childrens\x18\x04 \x03(\x0b\x32\x1c.join_order.LogicalTableNode\x12)\n\nconditions\x18\x05 \x03(\x0b\x32\x15.join_order.Condition\"]\n\x10LogicalTableNode\x12\n\n\x02tp\x18\x01 \x01(\t\x12\x12\n\ntable_name\x18\x02 \x01(\t\x12)\n\nconditions\x18\x03 \x03(\x0b\x32\x15.join_order.Condition\"{\n\x05State\x12\x32\n\x11\x63urrent_join_tree\x18\x01 \x01(\x0b\x32\x17.join_order.LogicalNode\x12(\n\x07\x61\x63tions\x18\x02 \x03(\x0b\x32\x17.join_order.LogicalNode\x12\x14\n\x0coriginal_sql\x18\x03 \x01(\t\"\x07\n\x05\x45mpty\"\x1a\n\tBoolValue\x12\r\n\x05value\x18\x01 \x01(\x08\x32\x8e\x01\n\x07Greeter\x12>\n\x08SayHello\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x12\x43\n\rSayHelloAgain\x12\x18.join_order.HelloRequest\x1a\x16.join_order.HelloReply\"\x00\x32\xc1\x01\n\tJoinOrder\x12\x45\n\x0cTestJoinNode\x12\x1b.join_order.LogicalJoinNode\x1a\x16.join_order.HelloReply\"\x00\x12\x38\n\tGetAction\x12\x11.join_order.State\x1a\x16.join_order.HelloReply\"\x00\x12\x33\n\x05IsDQN\x12\x11.join_order.Empty\x1a\x15.join_order.BoolValue\"\x00\x42V\n\x1bio.grpc.examples.helloworldB\x0fHelloWorldProtoP\x01Z$github.com/pingcap/tidb/planner/coreb\x06proto3'
 )
 
 
@@ -307,6 +307,13 @@ _STATE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='original_sql', full_name='join_order.State.original_sql', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -320,7 +327,7 @@ _STATE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=605,
-  serialized_end=706,
+  serialized_end=728,
 )
 
 
@@ -344,8 +351,8 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=708,
-  serialized_end=715,
+  serialized_start=730,
+  serialized_end=737,
 )
 
 
@@ -376,8 +383,8 @@ _BOOLVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=717,
-  serialized_end=743,
+  serialized_start=739,
+  serialized_end=765,
 )
 
 _LOGICALNODE.fields_by_name['join_node'].message_type = _LOGICALJOINNODE
@@ -479,8 +486,8 @@ _GREETER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=746,
-  serialized_end=888,
+  serialized_start=768,
+  serialized_end=910,
   methods=[
   _descriptor.MethodDescriptor(
     name='SayHello',
@@ -515,8 +522,8 @@ _JOINORDER = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=891,
-  serialized_end=1084,
+  serialized_start=913,
+  serialized_end=1106,
   methods=[
   _descriptor.MethodDescriptor(
     name='TestJoinNode',

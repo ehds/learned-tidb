@@ -6,7 +6,7 @@ import math
 import queue
 import copy
 import numpy as np
-from utils.file_helper import get_db_info
+from utils.file_helper import get_db_info, get_join_info
 
 
 def convert_execute_time_to_ms(value):
@@ -72,6 +72,53 @@ class JoinPlan(Plan):
         self.conditions = conditions
         self.left_node = None
         self.right_node = None
+
+    def get_all_join_conditions(self):
+        """ Extract all join conditions from the join tree """
+        # BFS the join tree
+        q = queue.Queue()
+        q.put(self)
+        conditions = []
+        while not q.empty():
+            current_node = q.get()
+            if type(current_node) != JoinPlan:
+                continue
+            for condition in current_node.conditions:
+                if condition.function == 'eq':
+                    conditions.append(condition)
+            q.put(current_node.left_node)
+            q.put(current_node.right_node)
+        return conditions
+
+    def encoding_join_conditions(self):
+        """ encoding all condition from the join tree 
+            Returns:
+            join_weight_matrix: i,j selectivity column_i = column_j
+            join_vector: join_vector[i], column_i exists in join conditions
+        """
+
+        all_conditions = self.get_all_join_conditions()
+        db_info = get_db_info('imdb')
+        all_columns = db_info['flatten_columns']
+        join_info = get_join_info('imdb')
+        columns_num = len(all_columns)
+        # TODO sparse matrix
+        join_weight_matrix = np.zeros((columns_num, columns_num))
+        join_vector = np.zeros((columns_num, 1))
+        for condition in all_conditions:
+            assert condition.function == 'eq'
+            assert len(condition.args) == 2
+            c_i, c_j = condition.args
+            if (c_i, c_j) in db_info:
+                selctivity = db_info[(c_i, c_j)]
+                i, j = all_columns.index(c_i), all_columns.index(c_j)
+                join_weight_matrix[i][j] = selctivity
+                join_vector[i] = np.array([1])
+        # build symmetric adjacency matrix
+
+        adj = normalize(join_weight_matrix +
+                        np.eye(join_weight_matrix.shape[0]))
+        return adj, join_vector
 
     def get_features(self, encoding='one-hot'):
         # TODO encode conditions
@@ -393,11 +440,14 @@ class State():
     r""" An state corresponed to s_t of all trajectories,
     includes `current_join_tree` and `not join tables`"""
 
-    def __init__(self, joined_tables, join_tree, not_join_tables):
+    def __init__(self, joined_tables, join_tree, not_join_tables, origin_tree):
         self.joined_tables = joined_tables
         self.not_join_tables = not_join_tables
+        # current root node
         self.join_tree = join_tree
         self.is_done = len(not_join_tables) == 0
+        # the top node of current node
+        self.origin_tree = origin_tree
 
     def __str__(self):
         return f'joined_tables:{self.joined_tables},join_tree:{self.join_tree}not_join_tables:{self.not_join_tables}'
@@ -452,6 +502,7 @@ def convert_tree_to_trajectory(node, latency=False):
     """
     # TODO support bushy tree
     current_node = node
+    top_node = node
     # Deep first search tree, and extract state and reward
     # action at is None means terminal, so reawrd is zero
     join_trees = [current_node]  # final state
@@ -488,12 +539,27 @@ def convert_tree_to_trajectory(node, latency=False):
 
     for i in range(1, actions_length):
         state = State(join_order_reverse[:i],
-                      join_trees[i-1], join_order_reverse[i:])
+                      join_trees[i-1], join_order_reverse[i:], top_node)
         trajectories.append(
             Observation(state, join_order_reverse[i], rewards[i-1]))
     else:
-        state = State(join_order_reverse, join_trees[-1], [])
+        state = State(join_order_reverse, join_trees[-1], [], top_node)
         trajectories.append(Observation(state, None, 0))
     # Construct trajectories
 
     return trajectories
+
+
+def symmetric_adjacency_matrix(adj):
+    adj = adj + adj.T * (adj.T > adj) - adj*(adj.T > adj)
+    return adj
+
+
+def normalize(mx):
+    """Row-normalize sparse matrix"""
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = np.diag(r_inv)
+    mx = r_mat_inv.dot(mx)
+    return mx

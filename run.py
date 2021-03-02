@@ -28,6 +28,7 @@ if __name__ == '__main__':
         "./join-order-benchmark")
 
     db = DB('127.0.0.1', 'root', '', 'imdb', 4000)
+    db_for_server = DB('127.0.0.1', 'root', '', 'imdb', 4000)
     print(len(db.unique_columns))
     a = extract_join_tree_from_path(os.path.join("data", "33c.json"))
     print(a.conditions)
@@ -37,4 +38,4 @@ if __name__ == '__main__':
     act_dim = b[0].action.encode()[0].shape[0]
     model = JoinOrderDQN(db, workload, 32, 1, obs_dim, act_dim, False)
     threading.Thread(target=train_model, args=(model,)).start()
-    server.serve(model, True)
+    server.serve(model, db_for_server, True)

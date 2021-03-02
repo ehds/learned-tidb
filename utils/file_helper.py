@@ -13,6 +13,21 @@ def write_db_info(data, database):
         pickle.dump(data, f)
 
 
+def write_join_info(data, database):
+    """ foramt:
+        column_i,column_j : selectivity, card
+    """
+    with open(f'data/{database}_join.pkl', 'wb') as f:
+        pickle.dump(data, f)
+
+
+def get_join_info(database):
+    data = None
+    with open(f'data/{database}_join.pkl', 'rb') as f:
+        data = pickle.load(f)
+    return data
+
+
 def get_db_info(database):
     data = None
     with open(f'data/{database}.pkl', 'rb') as f:

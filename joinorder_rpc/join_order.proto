@@ -72,6 +72,7 @@ message LogicalTableNode{
 message State{
   LogicalNode current_join_tree = 1;
   repeated LogicalNode actions = 2;
+  string original_sql = 3;
 }
 
 message Empty{ 

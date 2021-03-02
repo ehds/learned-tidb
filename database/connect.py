@@ -52,7 +52,6 @@ class DB():
         self._init_db_info()
 
     def reconnect(self):
-        self.db.commit()
         self.db.close()
         self.db = MySQLdb.connect(self.host, self.user, self.passwd,
                                   self.database, self.port, self.charset)

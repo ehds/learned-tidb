@@ -186,7 +186,7 @@ class JoinOrderDQN(object):
 
             Q_expected = rewards+self.gamma*Q_next*(1-dones)
 
-            loss = F.smooth_l1_loss(Q, Q_expected, size_average=True)
+            loss = F.smooth_l1_loss(Q, Q_expected, reduction='mean')
             losses.append(loss.item())
             # update network
             q_optimizer.zero_grad()
