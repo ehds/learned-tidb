@@ -7,7 +7,7 @@ from utils.extract import convert_analyze_to_object
 from utils.file_helper import write_db_info
 from utils.join_order import convert_execute_time_to_ms
 import math
-
+import time
 
 class Column():
     def __init__(self, column_name):
@@ -97,6 +97,11 @@ class DB():
         est_rows = explain_info['estRows']
         # act_rows = limit_info['ActRows']
         return float(est_rows)
+
+    def get_latency2(self, sql):
+        start = time.time()
+        analyze_info = self.explain(sql, analyze=True)
+        return max(0.0001, time.time()-start)
 
     def get_latency(self, sql):
         analyze_info = self.explain(sql, analyze=True)
