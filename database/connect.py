@@ -9,6 +9,7 @@ from utils.join_order import convert_execute_time_to_ms
 import math
 import time
 
+
 class Column():
     def __init__(self, column_name):
         self.name = column_name
@@ -50,6 +51,7 @@ class DB():
         self.columns = {}
         # get db info
         self._init_db_info()
+        self.latency_record = {}
 
     def reconnect(self):
         self.db.close()
@@ -98,19 +100,29 @@ class DB():
         # act_rows = limit_info['ActRows']
         return float(est_rows)
 
-    def get_latency2(self, sql):
+    def get_latency2(self, sql, cache=False):
+        if cache and (sql in self.latency_record):
+            print("hit")
+            return self.latency_record[sql]
         start = time.time()
         analyze_info = self.explain(sql, analyze=True)
-        return max(0.0001, time.time()-start)
+        result = time.time()-start
+        if cache:
+            self.latency_record[sql] = result
+        return result
 
-    def get_latency(self, sql):
+    def get_latency(self, sql, cache=False):
+        if cache and (sql in self.latency_record):
+            return self.latency_record[sql]
         analyze_info = self.explain(sql, analyze=True)
         if analyze_info == None:
             return 1e10
         latency = convert_execute_time_to_ms(
             analyze_info['AnalyzeInfo']['time'])
-        assert latency >= 0
-        return max(0.000001, latency)
+        assert latency > 0
+        if cache:
+            self.latency_record[sql] = latency
+        return float(latency)
 
     def analyze(self, sql):
         analyze_info = self.explain(sql, True)

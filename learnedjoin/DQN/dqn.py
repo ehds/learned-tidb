@@ -13,6 +13,7 @@ import math
 import random
 import time
 from collections import defaultdict
+import pickle
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -171,7 +172,7 @@ class JoinOrderDQN(object):
         # TODO off-line to on-line
 
         q_optimizer = Adam(self.q_net.parameters(), lr=1e-3)
-        best_mrc = 1e10
+        best_gmrl = 1e10
         self.q_net.train()
         losses = []
         for step in range(self.train_steps):
@@ -194,22 +195,24 @@ class JoinOrderDQN(object):
 
             loss = F.smooth_l1_loss(Q, Q_expected, reduction='mean')
             losses.append(loss.item())
-            # update network
             q_optimizer.zero_grad()
             loss.backward()
-            # nn.utils.clip_grad_norm_(
-            #     self.q_net.parameters(), self.clippng_norm)
             q_optimizer.step()
             if (step+1) % 10 == 0:
-                print(len(losses))
                 print("mean loss:", np.mean(losses))
-                # result = self.validate_all()
-                # print(result)
-                # mean, mrc = self.validate()
-                # print(f"mean:{mean}, mrc:{mrc}")
-                # if mrc < best_mrc:
-                #     best_mrc = mrc
-                #     self.save_model()
+                result = self.validate_all()
+                mean_loss = []
+                gmrl_loss = []
+                for r in result:
+                    mean_loss.append(result[r][0])
+                    gmrl_loss.append(result[r][1])
+                mean, gmrl = np.mean(mean_loss), np.mean(gmrl_loss)
+                print(result, mean, gmrl)
+                if gmrl < best_gmrl:
+                    best_gmrl = gmrl
+                    with open('data/template_loss.pkl', 'wb') as f:
+                        pickle.dump(result, f)
+                    self.save_model()
                 self.target_net.load_state_dict(self.q_net.state_dict())
 
     def set_dqn(self, flag):
@@ -232,12 +235,12 @@ class JoinOrderDQN(object):
                 query_sql = self.workload.get_query(query_name)
                 # tidb cost
                 self.set_dqn(False)
-                tidb_cost = self.database.get_latency2(query_sql)
+                tidb_cost = self.database.get_latency(query_sql, cache=True)
                 self.set_dqn(True)
-                dqn_cost = self.database.get_latency2(query_sql)
+                dqn_cost = self.database.get_latency(query_sql)
                 cost_pairs.append([dqn_cost, tidb_cost])
-            costs_result[template].append(self.compute_metrics(cost_pairs))
-        return cost_pairs
+            costs_result[template] = self.compute_metrics(cost_pairs)
+        return costs_result
 
     def validate(self):
         validate_set = self.workload.get_all_query()
