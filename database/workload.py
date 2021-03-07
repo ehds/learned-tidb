@@ -1,6 +1,8 @@
 import os
 import glob
 import random
+from collections import defaultdict
+import re
 
 
 class WorkLoad(object):
@@ -27,6 +29,24 @@ class WorkLoad(object):
 
     def get_all_query(self):
         return [WorkLoad._get_sql_from_file(f) for f in self.sql_files]
+
+    def get_all_query_names(self):
+        """ get all query name ordered by id 
+            Return:
+                data:dict id->[...]
+        """
+        sql_files = self.sql_files
+        sql_names = defaultdict(list)
+        for sql_file in sql_files:
+            name = os.path.split(sql_file)[1]
+            template_id = re.search('\d+', name).group(0)
+            sql_names[template_id].append(name)
+        return sql_names
+
+    def __len__(self):
+        if self.sql_files == None:
+            return 0
+        return len(self.sql_files)
 
     @staticmethod
     def _get_sql_from_file(file_path, encoding='utf-8'):

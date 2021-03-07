@@ -12,6 +12,7 @@ import os
 import math
 import random
 import time
+from collections import defaultdict
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -141,7 +142,7 @@ class JoinOrderDQN(object):
             # get actual  execution info
             start_time = time.time()
             execution_info = self.database.explain(query, self.latency_train)
-            execution_time = max(0.001,time.time()-start_time)
+            execution_time = max(0.001, time.time()-start_time)
             if execution_info == None:
                 continue
             # add to replay buffer TODO save it
@@ -150,7 +151,7 @@ class JoinOrderDQN(object):
                 join_tree, self.latency_train)
             for i in range(len(trajectories)-1):
                 ob, next_ob = trajectories[i], trajectories[i+1]
-                #self.replay_buffer.add_observation(
+                # self.replay_buffer.add_observation(
                 #    ob.state, ob.action, ob.reward, next_ob.state, next_ob.state.is_done)
                 self.replay_buffer.add_observation(
                     ob.state, ob.action, math.log(execution_time), next_ob.state, next_ob.state.is_done)
@@ -202,16 +203,41 @@ class JoinOrderDQN(object):
             if (step+1) % 10 == 0:
                 print(len(losses))
                 print("mean loss:", np.mean(losses))
-                mean, mrc = self.validate()
-                print(f"mean:{mean}, mrc:{mrc}")
-                if mrc < best_mrc:
-                    best_mrc = mrc
-                    self.save_model()
+                # result = self.validate_all()
+                # print(result)
+                # mean, mrc = self.validate()
+                # print(f"mean:{mean}, mrc:{mrc}")
+                # if mrc < best_mrc:
+                #     best_mrc = mrc
+                #     self.save_model()
                 self.target_net.load_state_dict(self.q_net.state_dict())
 
     def set_dqn(self, flag):
         with open('config.conf', 'w') as f:
             f.write(str(flag))
+
+    def compute_metrics(self, cost_pairs):
+        costs = np.log(np.array(cost_pairs))
+        costs = costs[:, 0] - costs[:, 1]
+        mean = np.mean(np.exp(costs))
+        mrc = np.exp(np.mean(costs))
+        return mean, mrc
+
+    def validate_all(self):
+        validate_set = self.workload.get_all_query_names()
+        costs_result = defaultdict(list)
+        for template in validate_set:
+            cost_pairs = []
+            for query_name in validate_set[template]:
+                query_sql = self.workload.get_query(query_name)
+                # tidb cost
+                self.set_dqn(False)
+                tidb_cost = self.database.get_latency2(query_sql)
+                self.set_dqn(True)
+                dqn_cost = self.database.get_latency2(query_sql)
+                cost_pairs.append([dqn_cost, tidb_cost])
+            costs_result[template].append(self.compute_metrics(cost_pairs))
+        return cost_pairs
 
     def validate(self):
         validate_set = self.workload.get_all_query()
@@ -234,7 +260,7 @@ class JoinOrderDQN(object):
             dqn_cost = time_record_dqn[i]
             db_cost = time_record_tidb[i]
             perfomance_ratio.append(math.log(dqn_cost)-math.log(db_cost))
-            time_record.append([dqn_cost,db_cost])
+            time_record.append([dqn_cost, db_cost])
         mean = np.mean(np.exp(perfomance_ratio))
         mrc = np.exp(np.sum(perfomance_ratio)/len(perfomance_ratio))
         print(perfomance_ratio)

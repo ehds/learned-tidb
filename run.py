@@ -26,7 +26,7 @@ if __name__ == '__main__':
     logging.basicConfig()
     workload = WorkLoad(
         "./join-order-benchmark")
-
+    validate_set = workload.get_all_query_names()
     db = DB('127.0.0.1', 'root', '', 'imdb', 4000)
     db_for_server = DB('127.0.0.1', 'root', '', 'imdb', 4000)
     print(len(db.unique_columns))
